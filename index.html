@@ -221,6 +221,22 @@
             font-size: 1.2em;
             padding-left: 10px;
         }
+
+        .list-footer {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--input-border);
+    display: flex;
+    justify-content: center;
+    gap: 15px; /* Abstand zwischen Import/Export */
+}
+
+/* Optional: Damit die Buttons in der Liste etwas dezenter wirken */
+.list-footer .small-btn {
+    background: var(--container-bg);
+    min-width: 100px;
+}
+        
     </style>
 </head>
 
@@ -237,9 +253,14 @@
         </div>
 
         <div id="listView" style="display: none;">
-            <div class="section-title">Gespeicherte Vergleiche</div>
-            <div id="savedList"></div>
-        </div>
+    <div class="section-title">Gespeicherte Vergleiche</div>
+    <div id="savedList"></div>
+    
+    <div class="list-footer">
+        <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
+        <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
+    </div>
+</div>
 
         <div id="calculatorView">
             <div class="input-group">
@@ -448,6 +469,47 @@
                 toggleView();
             }
         }
+
+        function exportLohnData() {
+    const dataStr = JSON.stringify(savedCalculations);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "lohnrechner_backup.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function importLohnData() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = event => {
+            try {
+                const imported = JSON.parse(event.target.result);
+                if (Array.isArray(imported)) {
+                    if (confirm("Möchtest du die importierten Daten mit den aktuellen zusammenführen? (Abbrechen ersetzt alles)")) {
+                        savedCalculations = [...savedCalculations, ...imported];
+                    } else {
+                        savedCalculations = imported;
+                    }
+                    localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                    renderList();
+                }
+            } catch (err) {
+                alert("Fehler beim Importieren: Ungültiges Format");
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+}
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
         window.onload = calculate;
