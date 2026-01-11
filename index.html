@@ -304,7 +304,7 @@
 
         <div id="listView" style="display: none;">
             <div class="section-title" style="display: flex; justify-content: space-between; align-items: baseline;">
-                <span>Gespeicherte Vergleiche</span>
+                <span>Berechnungen</span>
             </div>
             <p id="listHint"
                 style="font-size: 0.75em; font-style: italic; opacity: 0.7; text-align: center; margin-top: -2px;">
@@ -470,7 +470,7 @@
             );
 
             if (isDuplicate) {
-                alert("Dieser Vergleich ist bereits in der Liste gespeichert.");
+                alert("Diese Berechnung ist bereits in der Liste gespeichert.");
                 return; // Speichern abbrechen
             }
 
@@ -521,7 +521,9 @@
                 if (hint) hint.style.display = 'none';
                 return;
             } else {
-                if (hint) hint.style.display = 'block';
+                if (hint) {
+                    hint.style.display = (savedCalculations.length >= 2) ? 'block' : 'none';
+                }
             }
 
             savedCalculations.forEach(e => {
