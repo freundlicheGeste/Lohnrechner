@@ -12,6 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lohn- & Netto-Rechner BW</title>
     <style>
+        /* 1. Grund-Variablen & Themes */
         :root {
             --bg-color: #f4f4f9;
             --container-bg: #ffffff;
@@ -33,6 +34,7 @@
             --accent-color: #ffa500;
         }
 
+        /* 2. Layout & Basis-Elemente */
         body {
             font-family: sans-serif;
             background-color: var(--bg-color);
@@ -62,44 +64,7 @@
             margin-bottom: 20px;
         }
 
-        .small-btn {
-            cursor: pointer;
-            width: 42px;
-            height: 42px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            border: 1px solid var(--input-border);
-            background: var(--result-bg);
-            color: var(--text-color);
-            font-size: 1.1em;
-            outline: none;
-            transition: transform 0.1s active;
-        }
-
-        .small-btn:active {
-            transform: scale(0.95);
-        }
-
-        .list-footer .small-btn {
-            width: auto;
-            height: auto;
-            padding: 10px 15px;
-            aspect-ratio: auto;
-        }
-
-        .section-title {
-            margin: 20px 0 10px 0;
-            font-size: 0.8em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--accent-color);
-            border-bottom: 1px solid var(--input-border);
-            padding-bottom: 5px;
-        }
-
+        /* 3. Eingabe-Elemente */
         .input-group {
             margin-bottom: 15px;
         }
@@ -129,16 +94,35 @@
             background-color: var(--result-bg);
         }
 
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        /* 4. Buttons & Interaktion */
+        .small-btn {
+            cursor: pointer;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background: var(--result-bg);
+            color: var(--text-color);
+            font-size: 1.1em;
+            outline: none;
+            transition: transform 0.1s active;
         }
 
-        input[type=number] {
-            -moz-appearance: textfield;
+        .small-btn:active {
+            transform: scale(0.95);
         }
 
+        .btn-success {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            transition: background-color 0.3s;
+        }
+
+        /* 5. Ergebniskarten & Details */
         .result-card {
             margin-top: 15px;
             padding: 15px;
@@ -158,47 +142,16 @@
             margin-top: 10px;
         }
 
-        .res-label {
-            font-size: 0.8em;
-            opacity: 0.8;
-            margin-bottom: 3px;
-        }
+        .res-label { font-size: 0.8em; opacity: 0.8; margin-bottom: 3px; }
+        .res-value { font-size: 1.6em; font-weight: bold; }
+        .brutto-card .res-value { color: var(--accent-color); }
+        .netto-value { color: var(--blue-accent); font-size: 2.2em; }
 
-        .res-value {
-            font-size: 1.6em;
-            font-weight: bold;
-        }
+        .details { margin-top: 15px; font-size: 0.85em; line-height: 1.6; }
+        .info-row { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(0, 0, 0, 0.05); padding: 4px 0; }
+        .section-title { margin: 20px 0 10px 0; font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-color); border-bottom: 1px solid var(--input-border); padding-bottom: 5px; }
 
-        .brutto-card .res-value {
-            color: var(--accent-color);
-        }
-
-        .netto-value {
-            color: var(--blue-accent);
-            font-size: 2.2em;
-        }
-
-        .details {
-            margin-top: 15px;
-            font-size: 0.85em;
-            line-height: 1.6;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 4px 0;
-        }
-
-        .info-footer {
-            font-size: 0.7em;
-            margin-top: 15px;
-            font-style: italic;
-            opacity: 0.7;
-            text-align: center;
-        }
-
+        /* 6. Listenansicht & Speicher-Karten */
         .save-card {
             background: var(--container-bg);
             border: 1px solid var(--input-border);
@@ -211,96 +164,27 @@
             position: relative;
         }
 
-        .save-data-left {
-            font-weight: bold;
-            font-size: 1.1em;
-            color: var(--text-color);
-        }
+        .save-card.selected { border: 2px solid var(--accent-color); background: var(--result-bg); }
+        .save-card.pinned { border-left: 5px solid var(--accent-color); }
+        .save-data-left { font-weight: bold; font-size: 1.1em; color: var(--text-color); }
+        .save-data-right { font-weight: bold; font-size: 1.2em; color: var(--blue-accent); text-align: right; }
+        .save-label-small { font-size: 0.75em; opacity: 0.7; display: block; font-weight: normal; }
+        .delete-btn { background: none; border: none; cursor: pointer; font-size: 1.2em; padding-left: 10px; }
+        
+        .list-footer { margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--input-border); display: flex; justify-content: center; gap: 15px; }
+        .list-footer .small-btn { width: auto; height: auto; padding: 10px 15px; background: var(--container-bg); min-width: 100px; }
 
-        .save-data-right {
-            font-weight: bold;
-            font-size: 1.2em;
-            color: var(--blue-accent);
-            text-align: right;
-        }
+        .compare-banner { background: var(--accent-color); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9em; display: none; box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3); }
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px; font-weight: bold; }
+        .mirror-icon { display: inline-block; transform: scaleX(-1); }
 
-        .save-label-small {
-            font-size: 0.75em;
-            opacity: 0.7;
-            display: block;
-            font-weight: normal;
-        }
-
-        .delete-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2em;
-            padding-left: 10px;
-        }
-
-        .list-footer {
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid var(--input-border);
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .list-footer .small-btn {
-            background: var(--container-bg);
-            min-width: 100px;
-        }
-
-        .save-card.selected {
-            border: 2px solid var(--accent-color);
-            background: var(--result-bg);
-        }
-
-        .compare-banner {
-            background: var(--accent-color);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.9em;
-            display: none;
-            box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
-        }
-
-        .compare-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 5px;
-            font-weight: bold;
-        }
-
-        .mirror-icon {
-            display: inline-block;
-            transform: scaleX(-1);
-            /* Spiegelt das Icon horizontal */
-        }
-
-        .save-card.pinned {
-            border-left: 5px solid var(--accent-color);
-        }
-
-        .btn-success {
-            background-color: #4CAF50 !important;
-            color: white !important;
-            transition: background-color 0.3s;
-        }
-
-        /* Toast-Container - übernimmt den Style der Brutto-Card */
+        /* 7. Toasts & Feedback */
         .toast {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%) translateY(120px);
             background: var(--result-bg);
-            /* Hintergrund wie Brutto-Card */
             color: var(--text-color);
             padding: 14px 22px;
             border-radius: 10px;
@@ -309,7 +193,6 @@
             gap: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             border: 1px solid var(--accent-color);
-            /* Rand wie Brutto-Card */
             z-index: 1000;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             font-size: 0.95em;
@@ -317,9 +200,7 @@
             justify-content: center;
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
 
         .undo-btn {
             color: var(--accent-color);
@@ -330,17 +211,17 @@
             text-transform: uppercase;
             padding: 5px 10px;
             border-left: 1px solid var(--input-border);
-            /* Trenner zum Text */
             margin-left: 5px;
         }
+
+        .info-footer { font-size: 0.7em; margin-top: 15px; font-style: italic; opacity: 0.7; text-align: center; }
     </style>
 </head>
 
 <body>
 
-    <div
-        style="max-width: 400px; width: 99%; display: flex; justify-content: flex-end; margin-bottom: 5px; margin-right: 5px;">
-        <span id="versionDisplay" style="font-size: 0.75em; color: #888; font-family: sans-serif;"></span>
+    <div style="max-width: 400px; width: 99%; display: flex; justify-content: flex-end; margin-bottom: 5px; margin-right: 5px;">
+        <span id="versionDisplay" onclick="devClick()" style="font-size: 0.75em; color: #888; font-family: sans-serif; cursor: pointer;"></span>
     </div>
 
     <div class="container">
@@ -348,8 +229,7 @@
             <h2 style="margin:0;" id="mainTitle">Lohnrechner</h2>
             <div style="display: flex; gap: 8px;">
                 <button id="saveBtn" class="small-btn" onclick="saveCalculation()" title="Speichern">💾</button>
-                <button id="pinBtn" class="small-btn" style="display: none;" onclick="pinSelected()"
-                    title="Pinnen">📌</button>
+                <button id="pinBtn" class="small-btn" style="display: none;" onclick="pinSelected()" title="Pinnen">📌</button>
                 <button class="small-btn" onclick="toggleView()" id="viewBtn" title="Ansicht">📊</button>
                 <button class="small-btn" onclick="toggleTheme()" title="Theme">🌓</button>
             </div>
@@ -359,12 +239,10 @@
             <div class="section-title" style="display: flex; justify-content: space-between; align-items: baseline;">
                 <span>Berechnungen</span>
             </div>
-            <p id="listHint"
-                style="font-size: 0.75em; font-style: italic; opacity: 0.7; text-align: center; margin-top: -2px;">
+            <p id="listHint" style="font-size: 0.75em; font-style: italic; opacity: 0.7; text-align: center; margin-top: -2px;">
                 Tippe zwei Einträge zum Vergleichen
             </p>
             <div id="savedList"></div>
-
             <div class="list-footer">
                 <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
                 <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
@@ -374,18 +252,15 @@
         <div id="calculatorView">
             <div class="input-group">
                 <label>Arbeitswochen / Jahr:</label>
-                <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()"
-                    onkeydown="if(event.key==='Enter') document.getElementById('hoursPerWeek').focus()">
+                <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()" onkeydown="if(event.key==='Enter') document.getElementById('hoursPerWeek').focus()">
             </div>
             <div class="input-group">
                 <label>Wochenstunden:</label>
-                <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()"
-                    onkeydown="if(event.key==='Enter') document.getElementById('hourlyWage').focus()">
+                <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()" onkeydown="if(event.key==='Enter') document.getElementById('hourlyWage').focus()">
             </div>
             <div class="input-group">
                 <label>Stundenlohn (€):</label>
-                <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()"
-                    onfocus="this.select()" onkeydown="if(event.key==='Enter') { this.blur(); calculate(); }">
+                <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()" onfocus="this.select()" onkeydown="if(event.key==='Enter') { this.blur(); calculate(); }">
             </div>
 
             <div class="result-card brutto-card">
@@ -409,49 +284,69 @@
 
             <div class="info-footer">
                 Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
+                <button id="devUpdateBtn" onclick="forceUpdateApp()" style="display:none; margin:10px auto; opacity:0.5; font-size:0.8em; background:none; border:1px solid var(--input-border); color:var(--text-color); cursor:pointer; padding: 5px 10px; border-radius: 5px;">
+                    🔄 Cache leeren & Update erzwingen
+                </button>
             </div>
         </div>
     </div>
 
     <div id="appToast" class="toast">
-        <span id="toastText">Eintrag gelöscht</span>
-        <button id="toastAction" class="undo-btn" onclick="undoDelete()">Rückgängig</button>
+        <span id="toastText"></span>
+        <button id="toastAction" class="undo-btn"></button>
     </div>
 
     <script>
+        // --- 1. GLOBALE VARIABLEN & DATEN ---
         const APP_VERSION = "v1.0.3";
         const CHANGELOG = {
-            "v1.0.3": "Alerts wurde durch Toasts ersetzt. Haptisches Feedback für speichern/löschen",
-            "v1.0.1": "NEU: Export-Dateiname mit Zeitstempel, verbesserte Datensicherheit beim Import.",
+            "v1.0.3": "Alerts wurde durch Toasts ersetzt. Haptisches Feedback & Geheim-Menü für Updates.",
+            "v1.0.1": "Export-Dateiname mit Zeitstempel, verbesserte Datensicherheit beim Import.",
             "v1.0.0": "Optimierung der Berechnung für das Steuerjahr 2026."
+        };
+        let savedCalculations = JSON.parse(localStorage.getItem('lohn_saved')) || [];
+        let selectedIds = [];
+        let lastDeletedEntry = null;
+        let toastTimeout = null;
+        let devClickCount = 0;
+
+        // --- 2. INITIALISIERUNG & UPDATE-LOGIK ---
+        window.onload = function () { 
+            calculate(); 
+            checkUpdate(); 
+            if (localStorage.getItem('lohn_theme_bw') === 'dark') setTheme('dark');
         };
 
         function checkUpdate() {
             const lastVersion = localStorage.getItem('lohn_app_version');
             document.getElementById('versionDisplay').innerText = APP_VERSION;
-
             if (lastVersion && lastVersion !== APP_VERSION) {
                 const nachricht = CHANGELOG[APP_VERSION] || "Neue Funktionen verfügbar!";
-                // Wir nutzen showToast, aber ohne automatischen Timeout (0 übergeben)
                 showUpdateBanner(`Update ${APP_VERSION}: ${nachricht}`);
             }
             localStorage.setItem('lohn_app_version', APP_VERSION);
         }
 
-        function showUpdateBanner(msg) {
-            const toast = document.getElementById('appToast');
-            const textSpan = document.getElementById('toastText');
-            const actionBtn = document.getElementById('toastAction');
-
-            clearTimeout(toastTimeout); // Timer stoppen, damit es stehen bleibt
-            textSpan.innerText = msg;
-            actionBtn.innerText = "OK";
-            actionBtn.onclick = () => toast.classList.remove('show');
-            actionBtn.style.display = 'block';
-
-            toast.classList.add('show');
+        function devClick() {
+            devClickCount++;
+            if(devClickCount >= 5) {
+                document.getElementById('devUpdateBtn').style.display = 'block';
+                showToast("Entwickler-Modus aktiv");
+                devClickCount = 0;
+            }
         }
 
+        async function forceUpdateApp() {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let reg of registrations) await reg.unregister();
+            }
+            const names = await caches.keys();
+            for (let name of names) await caches.delete(name);
+            location.reload(true);
+        }
+
+        // --- 3. UI & THEME FUNKTIONEN ---
         function setTheme(t) {
             localStorage.setItem('lohn_theme_bw', t);
             document.documentElement.setAttribute('data-theme', t);
@@ -459,51 +354,6 @@
         function toggleTheme() {
             localStorage.getItem('lohn_theme_bw') === 'dark' ? setTheme('light') : setTheme('dark');
         }
-        if (localStorage.getItem('lohn_theme_bw') === 'dark') setTheme('dark');
-
-        function calculate() {
-            const weeks = parseFloat(document.getElementById('weeks').value) || 0;
-            const hoursPerWeek = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
-            const hourlyWage = parseFloat(document.getElementById('hourlyWage').value) || 0;
-
-            const monthBrutto = (weeks * hoursPerWeek * hourlyWage) / 12;
-
-            const kv = monthBrutto * 0.081 + (monthBrutto * 0.0085);
-            const rv = monthBrutto * 0.093;
-            const av = monthBrutto * 0.013;
-            const pv = monthBrutto * 0.023;
-
-            const svSumme = kv + rv + av + pv;
-
-            let lst = 0;
-            const jahresBrutto = monthBrutto * 12;
-            const steuerfrei = 11784;
-
-            if (jahresBrutto > steuerfrei) {
-                const zuVersteuerndesEinkommen = jahresBrutto - steuerfrei - (svSumme * 12 * 0.8);
-                if (zuVersteuerndesEinkommen > 0) {
-                    const y = zuVersteuerndesEinkommen / 10000;
-                    if (zuVersteuerndesEinkommen < 16000) {
-                        lst = (900 * y);
-                    } else {
-                        lst = (jahresBrutto * 0.14);
-                    }
-                }
-            }
-            const monatsLst = lst / 12;
-            const netto = monthBrutto - svSumme - monatsLst;
-
-            document.getElementById('monthlyBrutto').innerText = monthBrutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-            document.getElementById('monthlyNetto').innerText = (netto > 0 ? netto : 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-
-            document.getElementById('kv').innerText = kv.toFixed(2) + " €";
-            document.getElementById('rv').innerText = rv.toFixed(2) + " €";
-            document.getElementById('pv').innerText = pv.toFixed(2) + " €";
-            document.getElementById('av').innerText = av.toFixed(2) + " €";
-            document.getElementById('lst').innerText = monatsLst.toFixed(2) + " €";
-        }
-
-        let savedCalculations = JSON.parse(localStorage.getItem('lohn_saved')) || [];
 
         function toggleView() {
             const calc = document.getElementById('calculatorView');
@@ -529,6 +379,38 @@
             }
         }
 
+        // --- 4. BERECHNUNG & SPEICHERN ---
+        function calculate() {
+            const weeks = parseFloat(document.getElementById('weeks').value) || 0;
+            const hoursPerWeek = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
+            const hourlyWage = parseFloat(document.getElementById('hourlyWage').value) || 0;
+            const monthBrutto = (weeks * hoursPerWeek * hourlyWage) / 12;
+            const kv = monthBrutto * 0.081 + (monthBrutto * 0.0085);
+            const rv = monthBrutto * 0.093;
+            const av = monthBrutto * 0.013;
+            const pv = monthBrutto * 0.023;
+            const svSumme = kv + rv + av + pv;
+            let lst = 0;
+            const jahresBrutto = monthBrutto * 12;
+            const steuerfrei = 11784;
+            if (jahresBrutto > steuerfrei) {
+                const zuVersteuerndesEinkommen = jahresBrutto - steuerfrei - (svSumme * 12 * 0.8);
+                if (zuVersteuerndesEinkommen > 0) {
+                    const y = zuVersteuerndesEinkommen / 10000;
+                    lst = (zuVersteuerndesEinkommen < 16000) ? (900 * y) : (jahresBrutto * 0.14);
+                }
+            }
+            const monatsLst = lst / 12;
+            const netto = monthBrutto - svSumme - monatsLst;
+            document.getElementById('monthlyBrutto').innerText = monthBrutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+            document.getElementById('monthlyNetto').innerText = (netto > 0 ? netto : 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+            document.getElementById('kv').innerText = kv.toFixed(2) + " €";
+            document.getElementById('rv').innerText = rv.toFixed(2) + " €";
+            document.getElementById('pv').innerText = pv.toFixed(2) + " €";
+            document.getElementById('av').innerText = av.toFixed(2) + " €";
+            document.getElementById('lst').innerText = monatsLst.toFixed(2) + " €";
+        }
+
         function saveCalculation() {
             const weeks = document.getElementById('weeks').value;
             const hours = document.getElementById('hoursPerWeek').value;
@@ -536,69 +418,35 @@
             const brutto = document.getElementById('monthlyBrutto').innerText;
             const netto = document.getElementById('monthlyNetto').innerText;
 
-            const isDuplicate = savedCalculations.some(e =>
-                e.rawWage === parseFloat(wage) &&
-                e.rawHours === parseFloat(hours) &&
-                e.rawWeeks === parseFloat(weeks)
-            );
-
-            if (isDuplicate) {
-                // Haptisches Feedback für Fehler (kurz-lang)
+            if (savedCalculations.some(e => e.rawWage === parseFloat(wage) && e.rawHours === parseFloat(hours) && e.rawWeeks === parseFloat(weeks))) {
                 if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
                 showToast("Bereits vorhanden!");
                 return;
             }
 
-            const entry = {
-                id: Date.now(),
-                wage: wage + " €/Std.",
-                rawWage: parseFloat(wage),
-                netto: netto,
-                brutto: brutto,
-                hours: hours + " Std./Wo.",
-                rawHours: parseFloat(hours),
-                weeks: weeks + " Wo./Jahr",
-                rawWeeks: parseFloat(weeks),
-                pinned: false
-            };
-
+            const entry = { id: Date.now(), wage: wage + " €/Std.", rawWage: parseFloat(wage), netto: netto, brutto: brutto, hours: hours + " Std./Wo.", rawHours: parseFloat(hours), weeks: weeks + " Wo./Jahr", rawWeeks: parseFloat(weeks), pinned: false };
             savedCalculations.push(entry);
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-
-            // Haptisches Feedback für Erfolg (kurz)
             if (navigator.vibrate) navigator.vibrate(50);
             showToast("Berechnung gespeichert");
-
-            if (document.getElementById('listView').style.display !== 'none') {
-                renderList();
-            }
+            if (document.getElementById('listView').style.display !== 'none') renderList();
         }
 
-        let selectedIds = [];
-
+        // --- 5. LISTEN-VERWALTUNG & PIN ---
         function renderList() {
             const container = document.getElementById('savedList');
             container.innerHTML = '';
-
             const banner = document.createElement('div');
-            banner.id = "compareBanner";
-            banner.className = "compare-banner";
+            banner.id = "compareBanner"; banner.className = "compare-banner";
             container.appendChild(banner);
-
             const hint = document.getElementById('listHint');
             if (savedCalculations.length === 0) {
                 container.innerHTML = '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>';
                 if (hint) hint.style.display = 'none';
-                updateButtonVisibility();
-                return;
-            } else {
-                if (hint) {
-                    hint.style.display = (savedCalculations.length >= 2) ? 'block' : 'none';
-                }
+                updateButtonVisibility(); return;
             }
-
+            if (hint) hint.style.display = (savedCalculations.length >= 2) ? 'block' : 'none';
             savedCalculations.sort((a, b) => (b.pinned || false) - (a.pinned || false) || b.id - a.id);
-
             savedCalculations.forEach(e => {
                 const isSelected = selectedIds.includes(e.id);
                 const isPinned = e.pinned || false;
@@ -606,96 +454,55 @@
                 card.className = `save-card ${isSelected ? 'selected' : ''} ${isPinned ? 'pinned' : ''}`;
                 card.style.cursor = "pointer";
                 card.onclick = () => toggleSelect(e.id);
-
-                const pinIcon = isPinned ? '<span style="position:absolute; top:-5px; left:-5px; font-size:0.8em;">📍</span>' : '';
-
-                card.innerHTML = `
-            ${pinIcon}
-            <div style="pointer-events:none;">
-                <span class="save-data-left">${e.wage}</span>
-                <span class="save-label-small">${e.hours} | ${e.weeks}</span>
-            </div>
-            <div style="display: flex; align-items: center;">
-                <div style="text-align: right; pointer-events:none; margin-right: 10px;">
-                    <span class="save-data-right">${e.netto}</span>
-                    <span class="save-label-small">Brutto: ${e.brutto}</span>
-                </div>
-                <button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(${e.id})" title="Löschen">🗑️</button>
-            </div>
-        `;
+                card.innerHTML = `${isPinned ? '<span style="position:absolute; top:-5px; left:-5px; font-size:0.8em;">📍</span>' : ''}
+                    <div style="pointer-events:none;"><span class="save-data-left">${e.wage}</span><span class="save-label-small">${e.hours} | ${e.weeks}</span></div>
+                    <div style="display: flex; align-items: center;">
+                        <div style="text-align: right; pointer-events:none; margin-right: 10px;"><span class="save-data-right">${e.netto}</span><span class="save-label-small">Brutto: ${e.brutto}</span></div>
+                        <button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(${e.id})">🗑️</button>
+                    </div>`;
                 container.appendChild(card);
             });
-
-            updateCompareView();
-            updateButtonVisibility();
+            updateCompareView(); updateButtonVisibility();
         }
 
         function toggleSelect(id) {
-            if (selectedIds.includes(id)) {
-                selectedIds = selectedIds.filter(i => i !== id);
-            } else {
-                if (selectedIds.length < 2) {
-                    selectedIds.push(id);
-                } else {
-                    alert("Du kannst maximal zwei Einträge gleichzeitig vergleichen.");
-                    return;
-                }
-            }
+            if (selectedIds.includes(id)) { selectedIds = selectedIds.filter(i => i !== id); }
+            else if (selectedIds.length < 2) { selectedIds.push(id); }
+            else { alert("Maximal zwei Einträge vergleichen."); return; }
             renderList();
         }
 
         function updateCompareView() {
             const banner = document.getElementById('compareBanner');
-            if (selectedIds.length !== 2) {
-                banner.style.display = 'none';
-                return;
-            }
-
+            if (selectedIds.length !== 2) { banner.style.display = 'none'; return; }
             const item1 = savedCalculations.find(e => e.id === selectedIds[0]);
             const item2 = savedCalculations.find(e => e.id === selectedIds[1]);
             const parseCurrency = (str) => parseFloat(str.replace(/[^-0-9,]/g, '').replace(',', '.')) || 0;
-
-            const n1 = parseCurrency(item1.netto);
-            const n2 = parseCurrency(item2.netto);
-            const diffNetto = Math.abs(n1 - n2);
-
+            const diff = Math.abs(parseCurrency(item1.netto) - parseCurrency(item2.netto));
             banner.style.display = 'block';
-            banner.innerHTML = `
-                <strong>Vergleich der Auswahl:</strong>
-                <div class="compare-grid">
-                    <span>Diff. Netto:</span> <span>${diffNetto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
-                </div>
-            `;
+            banner.innerHTML = `<strong>Vergleich:</strong><div class="compare-grid"><span>Diff. Netto:</span> <span>${diff.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span></div>`;
         }
 
         function updateButtonVisibility() {
-            const pinBtn = document.getElementById('pinBtn');
-            const isListView = document.getElementById('listView').style.display !== 'none';
-            pinBtn.style.display = (isListView && selectedIds.length === 1) ? 'flex' : 'none';
+            const isList = document.getElementById('listView').style.display !== 'none';
+            document.getElementById('pinBtn').style.display = (isList && selectedIds.length === 1) ? 'flex' : 'none';
         }
 
         function pinSelected() {
             if (selectedIds.length !== 1) return;
             const idToPin = selectedIds[0];
-            savedCalculations = savedCalculations.map(e => {
-                if (e.id === idToPin) e.pinned = !e.pinned;
-                return e;
-            });
+            savedCalculations = savedCalculations.map(e => { if (e.id === idToPin) e.pinned = !e.pinned; return e; });
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
             renderList();
         }
 
+        // --- 6. IMPORT / EXPORT ---
         function exportLohnData() {
-            const jetzt = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const ts = `${jetzt.getFullYear()}-${pad(jetzt.getMonth() + 1)}-${pad(jetzt.getDate())}_${pad(jetzt.getHours())}-${pad(jetzt.getMinutes())}`;
-            const dataStr = JSON.stringify(savedCalculations);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
+            const ts = new Date().toISOString().slice(0,16).replace(/[:T]/g, '-');
+            const blob = new Blob([JSON.stringify(savedCalculations)], { type: "application/json" });
             const a = document.createElement("a");
-            a.href = url;
-            a.download = `lohnrechner_backup_${ts}.json`;
-            a.click();
+            a.href = URL.createObjectURL(blob);
+            a.download = `lohnrechner_backup_${ts}.json`; a.click();
         }
 
         function importLohnData() {
@@ -703,9 +510,9 @@
             input.type = "file";
             input.onchange = e => {
                 const reader = new FileReader();
-                reader.onload = event => {
+                reader.onload = ev => {
                     try {
-                        const imported = JSON.parse(event.target.result);
+                        const imported = JSON.parse(ev.target.result);
                         if (Array.isArray(imported)) {
                             savedCalculations = imported;
                             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
@@ -718,19 +525,41 @@
             input.click();
         }
 
-        let deleteTimeout = null;
+        // --- 7. FEEDBACK & TOASTS ---
+        function showToast(message, actionText = null, actionFn = null) {
+            const toast = document.getElementById('appToast');
+            const textSpan = document.getElementById('toastText');
+            const actionBtn = document.getElementById('toastAction');
+            clearTimeout(toastTimeout);
+            textSpan.innerText = message;
+            if (actionText && actionFn) {
+                actionBtn.innerText = actionText;
+                actionBtn.onclick = (e) => { e.stopPropagation(); actionFn(); };
+                actionBtn.style.display = 'block';
+            } else { actionBtn.style.display = 'none'; }
+            toast.classList.add('show');
+            toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
+        }
+
+        function showUpdateBanner(msg) {
+            const toast = document.getElementById('appToast');
+            document.getElementById('toastText').innerText = msg;
+            const btn = document.getElementById('toastAction');
+            btn.innerText = "OK";
+            btn.onclick = () => toast.classList.remove('show');
+            btn.style.display = 'block';
+            clearTimeout(toastTimeout);
+            toast.classList.add('show');
+        }
 
         function deleteEntry(id) {
             const index = savedCalculations.findIndex(e => e.id === id);
             if (index === -1) return;
-
             lastDeletedEntry = { data: savedCalculations[index], index: index };
             savedCalculations.splice(index, 1);
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-
             selectedIds = selectedIds.filter(sid => sid !== id);
             renderList();
-
             showToast("Eintrag gelöscht", "Rückgängig", undoDelete);
         }
 
@@ -743,62 +572,13 @@
             renderList();
         }
 
-        let lastDeletedEntry = null;
-        let toastTimeout = null;
-
-        function showToast(message, actionText = null, actionFn = null) {
-            const toast = document.getElementById('appToast');
-            const textSpan = document.getElementById('toastText');
-            const actionBtn = document.getElementById('toastAction');
-
-            // Falls ein Toast gerade verschwindet, sofort zurücksetzen
-            clearTimeout(toastTimeout);
-
-            textSpan.innerText = message;
-
-            if (actionText && actionFn) {
-                actionBtn.innerText = actionText;
-                actionBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    actionFn();
-                };
-                actionBtn.style.display = 'block';
-            } else {
-                actionBtn.style.display = 'none';
-            }
-
-            toast.classList.add('show');
-
-            // Nach 4 Sekunden ausblenden
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 4000);
-        }
-
-        function showUndoToast() {
-            const toast = document.getElementById('undoToast');
-
-            // Falls noch ein alter Timer läuft (schnelles Löschen), diesen stoppen
-            clearTimeout(deleteTimeout);
-
-            toast.classList.add('show');
-
-            // Toast nach 5 Sekunden automatisch ausblenden
-            deleteTimeout = setTimeout(() => {
-                toast.classList.remove('show');
-                lastDeletedEntry = null; // Endgültig weg
-            }, 5000);
-        }
-        // Prüft auf Service Worker Updates
+        // --- 8. SERVICE WORKER REGISTRIERUNG ---
         if ('serviceWorker' in navigator) {
-            avigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.register('sw.js');
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                // Diese Zeile wird ausgelöst, wenn ein neuer Service Worker die Kontrolle übernimmt
                 showUpdateBanner("App wurde aktualisiert. Bitte kurz neu starten.");
             });
         }
-        window.onload = function () { calculate(); checkUpdate(); };
     </script>
 </body>
-
 </html>
