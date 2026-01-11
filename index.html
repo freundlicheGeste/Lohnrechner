@@ -270,66 +270,64 @@
         <div id="listView" style="display: none;">
             <div class="section-title" style="display: flex; justify-content: space-between; align-items: baseline;">
                 <span>Gespeicherte Vergleiche</span>
-                <span style="font-size: 0.8em; opacity: 0.6; font-weight: normal; text-transform: none;">v1.0.5</span>
+
+                <span id="versionDisplay"
+                    style="font-size: 0.8em; color: #888; font-weight: normal; text-transform: none;"></span>
             </div>
             <div id="savedList"></div>
+
+            <div class="list-footer">
+                <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
+                <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
+            </div>
         </div>
 
-        <div class="list-footer">
-            <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
-            <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
-        </div>
-    </div>
+        <div id="calculatorView">
+            <div class="input-group">
+                <label>Arbeitswochen / Jahr:</label>
+                <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()"
+                    onkeydown="if(event.key==='Enter') document.getElementById('hoursPerWeek').focus()">
+            </div>
+            <div class="input-group">
+                <label>Wochenstunden:</label>
+                <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()"
+                    onkeydown="if(event.key==='Enter') document.getElementById('hourlyWage').focus()">
+            </div>
+            <div class="input-group">
+                <label>Stundenlohn (€):</label>
+                <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()"
+                    onfocus="this.select()" onkeydown="if(event.key==='Enter') { this.blur(); calculate(); }">
+            </div>
 
-    <div id="calculatorView">
-        <div style="text-align: center; margin-top: 10px;">
-            <button class="small-btn" onclick="shareResults()"
-                style="width: 100%; height: auto; padding: 10px; font-size: 0.9em;">
-                🔗 Ergebnis teilen
-            </button>
-        </div>
-        <div class="input-group">
-            <label>Arbeitswochen / Jahr:</label>
-            <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()"
-                onkeydown="if(event.key==='Enter') document.getElementById('hoursPerWeek').focus()">
-        </div>
-        <div class="input-group">
-            <label>Wochenstunden:</label>
-            <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()"
-                onkeydown="if(event.key==='Enter') document.getElementById('hourlyWage').focus()">
-        </div>
-        <div class="input-group">
-            <label>Stundenlohn (€):</label>
-            <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()" onfocus="this.select()"
-                onkeydown="if(event.key==='Enter') { this.blur(); calculate(); }">
-        </div>
+            <div class="result-card brutto-card">
+                <div class="res-label">Monatliches Brutto</div>
+                <div class="res-value" id="monthlyBrutto">0,00 €</div>
+            </div>
 
-        <div class="result-card brutto-card">
-            <div class="res-label">Monatliches Brutto</div>
-            <div class="res-value" id="monthlyBrutto">0,00 €</div>
-        </div>
+            <div class="result-card netto-card">
+                <div class="res-label">Netto (Steuerklasse 4, BW)</div>
+                <div class="netto-value" id="monthlyNetto">0,00 €</div>
+            </div>
 
-        <div class="result-card netto-card">
-            <div class="res-label">Netto (Steuerklasse 4, BW)</div>
-            <div class="netto-value" id="monthlyNetto">0,00 €</div>
-        </div>
+            <div class="details">
+                <div class="section-title">Details Abzüge</div>
+                <div class="info-row"><span>Krankenv. (8,1% + 1,1% Zusatz):</span><span id="kv">0 €</span></div>
+                <div class="info-row"><span>Rentenvers. (9,3%):</span><span id="rv">0 €</span></div>
+                <div class="info-row"><span>Pflegevers. (2,3%):</span><span id="pv">0 €</span></div>
+                <div class="info-row"><span>Arbeitslosenv. (1,3%):</span><span id="av">0 €</span></div>
+                <div class="info-row"><span>Lohnsteuer (Stkl. 4):</span><span id="lst">0 €</span></div>
+            </div>
 
-        <div class="details">
-            <div class="section-title">Details Abzüge</div>
-            <div class="info-row"><span>Krankenv. (8,1% + 1,1% Zusatz):</span><span id="kv">0 €</span></div>
-            <div class="info-row"><span>Rentenvers. (9,3%):</span><span id="rv">0 €</span></div>
-            <div class="info-row"><span>Pflegevers. (2,3%):</span><span id="pv">0 €</span></div>
-            <div class="info-row"><span>Arbeitslosenv. (1,3%):</span><span id="av">0 €</span></div>
-            <div class="info-row"><span>Lohnsteuer (Stkl. 4):</span><span id="lst">0 €</span></div>
+            <div class="info-footer">
+                Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
+            </div>
         </div>
-
-        <div class="info-footer">
-            Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
-        </div>
-    </div>
     </div>
 
     <script>
+        const APP_VERSION = "v1.0.5";
+        document.getElementById('versionDisplay').innerText = APP_VERSION;
+
         function setTheme(t) {
             localStorage.setItem('lohn_theme_bw', t);
             document.documentElement.setAttribute('data-theme', t);
@@ -408,7 +406,6 @@
             const hours = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
             const wage = parseFloat(document.getElementById('hourlyWage').value) || 0;
 
-            // Wir holen nicht den Text aus dem UI, sondern berechnen/nutzen die Rohdaten
             const entry = {
                 id: Date.now(),
                 wage: wage,
@@ -466,9 +463,9 @@
         function loadEntry(id) {
             const entry = savedCalculations.find(e => e.id === id);
             if (entry) {
-                document.getElementById('weeks').value = parseFloat(entry.weeks);
-                document.getElementById('hoursPerWeek').value = parseFloat(entry.hours);
-                document.getElementById('hourlyWage').value = parseFloat(entry.wage);
+                document.getElementById('weeks').value = entry.weeks;
+                document.getElementById('hoursPerWeek').value = entry.hours;
+                document.getElementById('hourlyWage').value = entry.wage;
 
                 calculate();
                 toggleView();
@@ -504,7 +501,6 @@
                     try {
                         const imported = JSON.parse(event.target.result);
 
-                        // Validierung: Ist es ein Array und enthalten die Objekte die Pflichtfelder?
                         if (Array.isArray(imported)) {
                             const validEntries = imported.filter(item => {
                                 return item.wage && item.hours && item.weeks && item.id;
@@ -536,25 +532,6 @@
                 reader.readAsText(file);
             };
             input.click();
-        }
-
-        function shareResults() {
-            const netto = document.getElementById('monthlyNetto').innerText;
-            const brutto = document.getElementById('monthlyBrutto').innerText;
-            const wage = document.getElementById('hourlyWage').value;
-
-            const text = `Mein Lohn-Check:\nStundenlohn: ${wage} €\nBrutto: ${brutto}\nNetto: ${netto}\n(Gerechnet mit Lohnrechner BW 2026)`;
-
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Lohnrechner Ergebnis',
-                    text: text
-                }).catch(console.error);
-            } else {
-                // Fallback: In die Zwischenablage kopieren
-                navigator.clipboard.writeText(text);
-                alert("Ergebnis wurde in die Zwischenablage kopiert!");
-            }
         }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
