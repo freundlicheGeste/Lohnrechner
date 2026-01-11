@@ -252,6 +252,30 @@
             background: var(--container-bg);
             min-width: 100px;
         }
+
+        .save-card.selected {
+            border: 2px solid var(--accent-color);
+            background: var(--result-bg);
+        }
+
+        .compare-banner {
+            background: var(--accent-color);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            display: none;
+            box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 5px;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -274,6 +298,10 @@
                 <span id="versionDisplay"
                     style="font-size: 0.8em; color: #888; font-weight: normal; text-transform: none;"></span>
             </div>
+            <p id="listHint"
+                style="font-size: 0.75em; font-style: italic; opacity: 0.7; text-align: center; margin-top: -2px;">
+                Tippe zwei Einträge zum Vergleichen
+            </p>
             <div id="savedList"></div>
 
             <div class="list-footer">
@@ -421,16 +449,33 @@
         }
 
         function saveCalculation() {
-            const weeks = parseFloat(document.getElementById('weeks').value) || 0;
-            const hours = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
-            const wage = parseFloat(document.getElementById('hourlyWage').value) || 0;
+            const weeks = document.getElementById('weeks').value;
+            const hours = document.getElementById('hoursPerWeek').value;
+            const wage = document.getElementById('hourlyWage').value;
+            const brutto = document.getElementById('monthlyBrutto').innerText;
+            const netto = document.getElementById('monthlyNetto').innerText;
+
+            const isDuplicate = savedCalculations.some(e =>
+                e.rawWage === parseFloat(wage) &&
+                e.rawHours === parseFloat(hours) &&
+                e.rawWeeks === parseFloat(weeks)
+            );
+
+            if (isDuplicate) {
+                alert("Dieser Vergleich ist bereits in der Liste gespeichert.");
+                return; // Speichern abbrechen
+            }
 
             const entry = {
                 id: Date.now(),
-                wage: wage,
-                hours: hours,
-                weeks: weeks,
-                timestamp: new Date().toISOString()
+                wage: wage + " €/Std.",
+                rawWage: parseFloat(wage),
+                netto: netto,
+                brutto: brutto,
+                hours: hours + " Std./Wo.",
+                rawHours: parseFloat(hours),
+                weeks: weeks + " Wo./Jahr",
+                rawWeeks: parseFloat(weeks)
             };
 
             savedCalculations.push(entry);
@@ -451,39 +496,106 @@
             }
         }
 
+        let selectedIds = [];
+
         function renderList() {
             const container = document.getElementById('savedList');
-            container.innerHTML = savedCalculations.length === 0 ?
-                '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
+            container.innerHTML = '';
+
+            const banner = document.createElement('div');
+            banner.id = "compareBanner";
+            banner.className = "compare-banner";
+            container.appendChild(banner);
+
+            const hint = document.getElementById('listHint');
+            if (savedCalculations.length === 0) {
+                container.innerHTML = '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>';
+                if (hint) hint.style.display = 'none';
+                return;
+            } else {
+                if (hint) hint.style.display = 'block';
+            }
 
             savedCalculations.forEach(e => {
-                const brutto = (e.weeks * e.hours * e.wage) / 12;
-                // Vereinfachte Netto-Anzeige für die Liste (Logik wie in calculate())
-                const netto = brutto * 0.65; // Grober Richtwert für die Listenübersicht
+                const isSelected = selectedIds.includes(e.id);
+                const card = document.createElement('div');
+                card.className = `save-card ${isSelected ? 'selected' : ''}`;
+                card.style.cursor = "pointer";
 
-                container.innerHTML += `
-        <div class="save-card" onclick="loadEntry(${e.id})" style="cursor:pointer;">
+                card.onclick = () => toggleSelect(e.id);
+                //card.onclick = () => loadEntry(e.id); // alternative Funktion (Eintrag wieder in Rechner laden)
+
+                card.innerHTML = `
             <div style="pointer-events:none;">
-                <span class="save-data-left">${e.wage.toFixed(2)} €/Std.</span>
-                <span class="save-label-small">${e.hours} Std./Wo. | ${e.weeks} Wo.</span>
+                <span class="save-data-left">${e.wage}</span>
+                <span class="save-label-small">${e.hours} | ${e.weeks}</span>
             </div>
             <div style="display: flex; align-items: center;">
-                <div style="text-align: right; pointer-events:none;">
-                    <span class="save-data-right">${brutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
-                    <span class="save-label-small">Monats-Brutto</span>
+                <div style="text-align: right; pointer-events:none; margin-right: 10px;">
+                    <span class="save-data-right">${e.netto}</span>
+                    <span class="save-label-small">Brutto: ${e.brutto}</span>
                 </div>
-                <button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(${e.id})">🗑️</button>
+                <button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(${e.id})" title="Löschen">🗑️</button>
             </div>
-        </div>`;
+        `;
+                container.appendChild(card);
             });
+
+            updateCompareView();
+        }
+
+        function toggleSelect(id) {
+            if (selectedIds.includes(id)) {
+                selectedIds = selectedIds.filter(i => i !== id);
+            } else {
+                if (selectedIds.length < 2) {
+                    selectedIds.push(id);
+                } else {
+                    alert("Du kannst maximal zwei Einträge gleichzeitig vergleichen.");
+                    return;
+                }
+            }
+            renderList();
+        }
+
+        function updateCompareView() {
+            const banner = document.getElementById('compareBanner');
+            if (selectedIds.length !== 2) {
+                banner.style.display = 'none';
+                return;
+            }
+
+            const item1 = savedCalculations.find(e => e.id === selectedIds[0]);
+            const item2 = savedCalculations.find(e => e.id === selectedIds[1]);
+
+            // Hilfsfunktion um "1.234,56 €" in Zahl umzuwandeln
+            const parseCurrency = (str) => parseFloat(str.replace(/[^-0-9,]/g, '').replace(',', '.')) || 0;
+
+            const n1 = parseCurrency(item1.netto);
+            const n2 = parseCurrency(item2.netto);
+            const b1 = parseCurrency(item1.brutto);
+            const b2 = parseCurrency(item2.brutto);
+
+            const diffNetto = Math.abs(n1 - n2);
+            const diffBrutto = Math.abs(b1 - b2);
+
+            banner.style.display = 'block';
+            banner.innerHTML = `
+        <strong>Vergleich der Auswahl:</strong>
+        <div class="compare-grid">
+            <span>Diff. Netto:</span> <span>${diffNetto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+            <span>Diff. Brutto:</span> <span>${diffBrutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+        </div>
+    `;
         }
 
         function loadEntry(id) {
             const entry = savedCalculations.find(e => e.id === id);
             if (entry) {
-                document.getElementById('weeks').value = entry.weeks;
-                document.getElementById('hoursPerWeek').value = entry.hours;
-                document.getElementById('hourlyWage').value = entry.wage;
+                selectedIds = [];
+                document.getElementById('weeks').value = entry.rawWeeks;
+                document.getElementById('hoursPerWeek').value = entry.rawHours;
+                document.getElementById('hourlyWage').value = entry.rawWage;
 
                 calculate();
                 toggleView();
@@ -530,7 +642,16 @@
                             }
 
                             const currentIds = new Set(savedCalculations.map(item => item.id));
-                            const newEntries = validEntries.filter(item => !currentIds.has(item.id));
+
+                            const newEntries = validEntries.filter(item => {
+                                const isIdDuplicate = currentIds.has(item.id);
+                                const isValueDuplicate = savedCalculations.some(s =>
+                                    s.rawWage === item.rawWage &&
+                                    s.rawHours === item.rawHours &&
+                                    s.rawWeeks === item.rawWeeks
+                                );
+                                return !isIdDuplicate && !isValueDuplicate;
+                            });
 
                             if (newEntries.length === 0) {
                                 alert("Alle Einträge sind bereits vorhanden.");
