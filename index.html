@@ -789,8 +789,14 @@
                 lastDeletedEntry = null; // Endgültig weg
             }, 5000);
         }
-
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        // Prüft auf Service Worker Updates
+        if ('serviceWorker' in navigator) {
+            avigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                // Diese Zeile wird ausgelöst, wenn ein neuer Service Worker die Kontrolle übernimmt
+                showUpdateBanner("App wurde aktualisiert. Bitte kurz neu starten.");
+            });
+        }
         window.onload = function () { calculate(); checkUpdate(); };
     </script>
 </body>
