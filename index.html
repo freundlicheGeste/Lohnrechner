@@ -244,16 +244,18 @@
         <div id="calculatorView">
             <div class="input-group">
                 <label>Arbeitswochen / Jahr:</label>
-                <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()">
+                <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()"
+                    onkeydown="if(event.key==='Enter') document.getElementById('hoursPerWeek').focus()">
             </div>
             <div class="input-group">
                 <label>Wochenstunden:</label>
-                <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()">
+                <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()"
+                    onkeydown="if(event.key==='Enter') document.getElementById('hourlyWage').focus()">
             </div>
             <div class="input-group">
                 <label>Stundenlohn (€):</label>
-                <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()" onfocus="this.select()"
-                    onkeydown="if(event.key==='Enter') this.blur()">
+                <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()"
+                    onfocus="this.select()" onkeydown="if(event.key==='Enter') { this.blur(); calculate(); }">
             </div>
 
             <div class="result-card brutto-card">
@@ -370,7 +372,7 @@
 
             savedCalculations.push(entry);
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-            
+
             // Sofortiges Update der Liste, falls man in der Listenansicht speichert
             if (document.getElementById('listView').style.display !== 'none') {
                 renderList();
@@ -386,28 +388,65 @@
                 renderList();
             }
         }
-
+        /*
+                function renderList() {
+                    const container = document.getElementById('savedList');
+                    container.innerHTML = savedCalculations.length === 0 ? '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
+        
+                    savedCalculations.forEach(e => {
+                        container.innerHTML += `
+                        <div class="save-card">
+                            <div>
+                                <span class="save-data-left">${e.wage}</span>
+                                <span class="save-label-small">${e.hours} | ${e.weeks}</span>
+                            </div>
+                            <div style="display: flex; align-items: center;">
+                                <div style="text-align: right;">
+                                    <span class="save-data-right">${e.netto}</span>
+                                    <span class="save-label-small">Brutto: ${e.brutto}</span>
+                                </div>
+                                <button class="delete-btn" onclick="deleteEntry(${e.id})">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                    });
+                }
+        */
         function renderList() {
             const container = document.getElementById('savedList');
             container.innerHTML = savedCalculations.length === 0 ? '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
 
             savedCalculations.forEach(e => {
                 container.innerHTML += `
-                <div class="save-card">
-                    <div>
-                        <span class="save-data-left">${e.wage}</span>
-                        <span class="save-label-small">${e.hours} | ${e.weeks}</span>
-                    </div>
-                    <div style="display: flex; align-items: center;">
-                        <div style="text-align: right;">
-                            <span class="save-data-right">${e.netto}</span>
-                            <span class="save-label-small">Brutto: ${e.brutto}</span>
-                        </div>
-                        <button class="delete-btn" onclick="deleteEntry(${e.id})">🗑️</button>
-                    </div>
+        <div class="save-card" onclick="loadEntry(${e.id})" style="cursor:pointer;">
+            <div style="pointer-events:none;">
+                <span class="save-data-left">${e.wage}</span>
+                <span class="save-label-small">${e.hours} | ${e.weeks}</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <div style="text-align: right; pointer-events:none;">
+                    <span class="save-data-right">${e.netto}</span>
+                    <span class="save-label-small">Brutto: ${e.brutto}</span>
                 </div>
-            `;
+                <button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(${e.id})">🗑️</button>
+            </div>
+        </div>
+    `;
             });
+        }
+
+        function loadEntry(id) {
+            const entry = savedCalculations.find(e => e.id === id);
+            if (entry) {
+                // Werte zurück in die Felder schreiben (Zahlen extrahieren)
+                document.getElementById('weeks').value = parseFloat(entry.weeks);
+                document.getElementById('hoursPerWeek').value = parseFloat(entry.hours);
+                document.getElementById('hourlyWage').value = parseFloat(entry.wage);
+
+                // Neu berechnen und Ansicht wechseln
+                calculate();
+                toggleView();
+            }
         }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
