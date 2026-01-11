@@ -64,13 +64,34 @@
 
         .small-btn {
             cursor: pointer;
-            padding: 8px;
+            /* Festgelegte Größe für quadratische Optik */
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            /* Padding entfernen, damit das Icon zentriert bleibt */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
             border-radius: 8px;
             border: 1px solid var(--input-border);
             background: var(--result-bg);
             color: var(--text-color);
             font-size: 1.1em;
             outline: none;
+            transition: transform 0.1s active;
+        }
+
+        .small-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Die Footer-Buttons in der Liste sollen Text behalten, daher dort keine festen Quadrate */
+        .list-footer .small-btn {
+            width: auto;
+            height: auto;
+            padding: 10px 15px;
+            aspect-ratio: auto;
         }
 
         .section-title {
@@ -223,20 +244,18 @@
         }
 
         .list-footer {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--input-border);
-    display: flex;
-    justify-content: center;
-    gap: 15px; /* Abstand zwischen Import/Export */
-}
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--input-border);
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
 
-/* Optional: Damit die Buttons in der Liste etwas dezenter wirken */
-.list-footer .small-btn {
-    background: var(--container-bg);
-    min-width: 100px;
-}
-        
+        .list-footer .small-btn {
+            background: var(--container-bg);
+            min-width: 100px;
+        }
     </style>
 </head>
 
@@ -244,7 +263,7 @@
 
     <div class="container">
         <div class="header">
-            <h2 style="margin:0;">Lohnrechner</h2>
+            <h2 style="margin:0;" id="mainTitle">Lohnrechner</h2>
             <div style="display: flex; gap: 8px;">
                 <button class="small-btn" onclick="saveCalculation()" title="Speichern">💾</button>
                 <button class="small-btn" onclick="toggleView()" id="viewBtn" title="Ansicht">📊</button>
@@ -253,14 +272,14 @@
         </div>
 
         <div id="listView" style="display: none;">
-    <div class="section-title">Gespeicherte Vergleiche</div>
-    <div id="savedList"></div>
-    
-    <div class="list-footer">
-        <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
-        <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
-    </div>
-</div>
+            <div class="section-title">Gespeicherte Vergleiche</div>
+            <div id="savedList"></div>
+
+            <div class="list-footer">
+                <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
+                <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
+            </div>
+        </div>
 
         <div id="calculatorView">
             <div class="input-group">
@@ -362,15 +381,18 @@
             const calc = document.getElementById('calculatorView');
             const list = document.getElementById('listView');
             const btn = document.getElementById('viewBtn');
+            const title = document.getElementById('mainTitle');
 
             if (calc.style.display === 'none') {
                 calc.style.display = 'block';
                 list.style.display = 'none';
                 btn.innerText = '📊';
+                title.innerText = 'Lohnrechner';
             } else {
                 calc.style.display = 'none';
                 list.style.display = 'block';
                 btn.innerText = '✏️';
+                title.innerText = 'Gehaltsliste';
                 renderList();
             }
         }
@@ -388,7 +410,7 @@
                 netto: netto,
                 brutto: brutto,
                 hours: hours + " Std./Wo.",
-                weeks: weeks + " Wo./Jahr" // Hinzugefügt für Vergleich
+                weeks: weeks + " Wo./Jahr"
             };
 
             savedCalculations.push(entry);
@@ -409,30 +431,7 @@
                 renderList();
             }
         }
-        /*
-                function renderList() {
-                    const container = document.getElementById('savedList');
-                    container.innerHTML = savedCalculations.length === 0 ? '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
-        
-                    savedCalculations.forEach(e => {
-                        container.innerHTML += `
-                        <div class="save-card">
-                            <div>
-                                <span class="save-data-left">${e.wage}</span>
-                                <span class="save-label-small">${e.hours} | ${e.weeks}</span>
-                            </div>
-                            <div style="display: flex; align-items: center;">
-                                <div style="text-align: right;">
-                                    <span class="save-data-right">${e.netto}</span>
-                                    <span class="save-label-small">Brutto: ${e.brutto}</span>
-                                </div>
-                                <button class="delete-btn" onclick="deleteEntry(${e.id})">🗑️</button>
-                            </div>
-                        </div>
-                    `;
-                    });
-                }
-        */
+
         function renderList() {
             const container = document.getElementById('savedList');
             container.innerHTML = savedCalculations.length === 0 ? '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
@@ -471,45 +470,52 @@
         }
 
         function exportLohnData() {
-    const dataStr = JSON.stringify(savedCalculations);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "lohnrechner_backup.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
+            const dataStr = JSON.stringify(savedCalculations);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "lohnrechner_backup.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
 
-function importLohnData() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-    input.onchange = e => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = event => {
-            try {
-                const imported = JSON.parse(event.target.result);
-                if (Array.isArray(imported)) {
-                    if (confirm("Möchtest du die importierten Daten mit den aktuellen zusammenführen? (Abbrechen ersetzt alles)")) {
-                        savedCalculations = [...savedCalculations, ...imported];
-                    } else {
-                        savedCalculations = imported;
+        function importLohnData() {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "application/json";
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (Array.isArray(imported)) {
+                            // Filtern: Nur Einträge nehmen, deren ID noch NICHT vorhanden ist
+                            const currentIds = new Set(savedCalculations.map(item => item.id));
+                            const newEntries = imported.filter(item => !currentIds.has(item.id));
+
+                            if (newEntries.length === 0) {
+                                alert("Keine neuen Einträge gefunden (alle bereits vorhanden).");
+                                return;
+                            }
+
+                            if (confirm(`${newEntries.length} neue Einträge gefunden. Hinzufügen?`)) {
+                                savedCalculations = [...savedCalculations, ...newEntries];
+                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                                renderList();
+                            }
+                        }
+                    } catch (err) {
+                        alert("Fehler beim Importieren: Ungültiges Format");
                     }
-                    localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-                    renderList();
-                }
-            } catch (err) {
-                alert("Fehler beim Importieren: Ungültiges Format");
-            }
-        };
-        reader.readAsText(file);
-    };
-    input.click();
-}
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
         window.onload = calculate;
