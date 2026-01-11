@@ -326,7 +326,26 @@
 
     <script>
         const APP_VERSION = "v1.0.5";
-        document.getElementById('versionDisplay').innerText = APP_VERSION;
+        const CHANGELOG = {
+            "v1.0.5": "NEU: Export-Dateiname mit Zeitstempel, verbesserte Datensicherheit beim Import und Teilen-Funktion!",
+            "v1.0.4": "Optimierung der Berechnung für das Steuerjahr 2026."
+        };
+
+        function checkUpdate() {
+            const lastVersion = localStorage.getItem('lohn_app_version');
+
+            // Versionsnummer in der UI setzen
+            document.getElementById('versionDisplay').innerText = APP_VERSION;
+
+            if (lastVersion !== APP_VERSION) {
+                const nachricht = CHANGELOG[APP_VERSION] || "Ein neues Update ist verfügbar!";
+
+                setTimeout(() => {
+                    alert(`Update auf ${APP_VERSION}\n\n${nachricht}`);
+                    localStorage.setItem('lohn_app_version', APP_VERSION);
+                }, 500);
+            }
+        }
 
         function setTheme(t) {
             localStorage.setItem('lohn_theme_bw', t);
@@ -438,7 +457,6 @@
                 '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
 
             savedCalculations.forEach(e => {
-                // Hier findet die Formatierung erst statt
                 const brutto = (e.weeks * e.hours * e.wage) / 12;
                 // Vereinfachte Netto-Anzeige für die Liste (Logik wie in calculate())
                 const netto = brutto * 0.65; // Grober Richtwert für die Listenübersicht
@@ -536,7 +554,10 @@
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 
-        window.onload = calculate;
+        window.onload = function () {
+            calculate();    // Aktuelle Eingaben berechnen
+            checkUpdate();  // Auf Updates prüfen
+        };
     </script>
 </body>
 
