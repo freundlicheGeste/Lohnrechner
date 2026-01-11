@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lohn- & Netto-Rechner BW</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --input-border: #cccccc;
+            --result-bg: #fff5e6;
+            --netto-bg: #e1f5fe;
+            --accent-color: #ff8c00;
+            --blue-accent: #0288d1;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #f4f4f4;
+            --input-border: #444444;
+            --result-bg: #2d1f10;
+            --netto-bg: #0d1a2b;
+            --accent-color: #ffa500;
+        }
+
+        /* Chrome, Safari, Edge, Opera */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Firefox */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        body {
+            font-family: sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 95%;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .small-btn {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background: var(--result-bg);
+            color: var(--text-color);
+            font-size: 1.1em;
+            outline: none;
+        }
+
+        .section-title {
+            margin: 20px 0 10px 0;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--input-border);
+            padding-bottom: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: var(--container-bg);
+            color: var(--text-color);
+            outline: none;
+        }
+
+        input:focus {
+            border: 2px solid var(--accent-color);
+            background-color: var(--result-bg);
+        }
+
+        .result-card {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid transparent;
+        }
+
+        .brutto-card {
+            background: var(--result-bg);
+            border-color: var(--accent-color);
+        }
+
+        .netto-card {
+            background: var(--netto-bg);
+            border-color: var(--blue-accent);
+            margin-top: 10px;
+        }
+
+        .res-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .res-value {
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .netto-value {
+            color: var(--blue-accent);
+            font-size: 2.2em;
+        }
+
+        .details {
+            margin-top: 15px;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 4px 0;
+        }
+
+        .info-footer {
+            font-size: 0.7em;
+            margin-top: 15px;
+            font-style: italic;
+            opacity: 0.7;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h2 style="margin:0;">Lohn-Rechner</h2>
+            <button class="small-btn" onclick="toggleTheme()">🌓</button>
+        </div>
+
+        <div class="input-group">
+            <label>Arbeitswochen / Jahr:</label>
+            <input type="number" id="weeks" value="52" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>Wochenstunden:</label>
+            <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>Stundenlohn (€):</label>
+            <input type="number" id="hourlyWage" value="19.38" step="0.50" oninput="calculate()">
+        </div>
+
+        <div class="result-card brutto-card">
+            <div class="res-label">Monatliches Brutto</div>
+            <div class="res-value" id="monthlyBrutto">0,00 €</div>
+        </div>
+
+        <div class="result-card netto-card">
+            <div class="res-label">Netto (Steuerklasse 4, BW)</div>
+            <div class="netto-value" id="monthlyNetto">0,00 €</div>
+        </div>
+
+        <div class="details">
+            <div class="section-title">Details Abzüge</div>
+            <div class="info-row"><span>Krankenv. (8,1% + 1,1% Zusatz):</span><span id="kv">0 €</span></div>
+            <div class="info-row"><span>Rentenvers. (9,3%):</span><span id="rv">0 €</span></div>
+            <div class="info-row"><span>Pflegevers. (2,3%):</span><span id="pv">0 €</span></div>
+            <div class="info-row"><span>Arbeitslosenv. (1,3%):</span><span id="av">0 €</span></div>
+            <div class="info-row"><span>Lohnsteuer (Stkl. 4):</span><span id="lst">0 €</span></div>
+        </div>
+
+        <div class="info-footer">
+            Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
+        </div>
+    </div>
+
+    <script>
+        function setTheme(t) {
+            localStorage.setItem('lohn_theme_bw', t);
+            document.documentElement.setAttribute('data-theme', t);
+        }
+        function toggleTheme() {
+            localStorage.getItem('lohn_theme_bw') === 'dark' ? setTheme('light') : setTheme('dark');
+        }
+        if (localStorage.getItem('lohn_theme_bw') === 'dark') setTheme('dark');
+
+        function calculate() {
+            const weeks = parseFloat(document.getElementById('weeks').value) || 0;
+            const hoursPerWeek = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
+            const hourlyWage = parseFloat(document.getElementById('hourlyWage').value) || 0;
+
+            const monthBrutto = (weeks * hoursPerWeek * hourlyWage) / 12;
+
+            // SV-Beiträge 2026 (Arbeitnehmeranteile ca.)
+            const kv = monthBrutto * 0.081 + (monthBrutto * 0.0085); // Basis + hälftiger Zusatzbeitrag
+            const rv = monthBrutto * 0.093;
+            const av = monthBrutto * 0.013;
+            const pv = monthBrutto * 0.023; // Durchschnitt BW für Eltern (ohne Kinderlos-Zuschlag)
+
+            const svSumme = kv + rv + av + pv;
+
+            // Annäherung Lohnsteuer (Steuerklasse 4 entspricht im Wesentlichen Klasse 1)
+            // Einfache Progressionsformel für die Web-App
+            let lst = 0;
+            const jahresBrutto = monthBrutto * 12;
+            const steuerfrei = 11784; // Grundfreibetrag ca. 2025/26
+
+            if (jahresBrutto > steuerfrei) {
+                const zuVersteuerndesEinkommen = jahresBrutto - steuerfrei - (svSumme * 12 * 0.8); // Vorsorgepauschale
+                if (zuVersteuerndesEinkommen > 0) {
+                    // Vereinfachte Formel für den Steuersatz
+                    const y = zuVersteuerndesEinkommen / 10000;
+                    if (zuVersteuerndesEinkommen < 16000) {
+                        lst = (900 * y);
+                    } else {
+                        lst = (jahresBrutto * 0.14); // Durchschnittliche Annäherung
+                    }
+                }
+            }
+            const monatsLst = lst / 12;
+
+            const netto = monthBrutto - svSumme - monatsLst;
+
+            // Anzeige
+            document.getElementById('monthlyBrutto').innerText = monthBrutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+            document.getElementById('monthlyNetto').innerText = (netto > 0 ? netto : 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+
+            document.getElementById('kv').innerText = kv.toFixed(2) + " €";
+            document.getElementById('rv').innerText = rv.toFixed(2) + " €";
+            document.getElementById('pv').innerText = pv.toFixed(2) + " €";
+            document.getElementById('av').innerText = av.toFixed(2) + " €";
+            document.getElementById('lst').innerText = monatsLst.toFixed(2) + " €";
+        }
+
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        window.onload = calculate;
+    </script>
+</body>
+
+</html>
