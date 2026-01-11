@@ -282,6 +282,57 @@
             transform: scaleX(-1);
             /* Spiegelt das Icon horizontal */
         }
+
+        .save-card.pinned {
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .btn-success {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            transition: background-color 0.3s;
+        }
+
+        /* Toast-Container - übernimmt den Style der Brutto-Card */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: var(--result-bg);
+            /* Hintergrund wie Brutto-Card */
+            color: var(--text-color);
+            padding: 14px 22px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--accent-color);
+            /* Rand wie Brutto-Card */
+            z-index: 1000;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95em;
+            min-width: 200px;
+            justify-content: center;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .undo-btn {
+            color: var(--accent-color);
+            background: none;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            padding: 5px 10px;
+            border-left: 1px solid var(--input-border);
+            /* Trenner zum Text */
+            margin-left: 5px;
+        }
     </style>
 </head>
 
@@ -291,12 +342,14 @@
         style="max-width: 400px; width: 99%; display: flex; justify-content: flex-end; margin-bottom: 5px; margin-right: 5px;">
         <span id="versionDisplay" style="font-size: 0.75em; color: #888; font-family: sans-serif;"></span>
     </div>
-    
+
     <div class="container">
         <div class="header">
             <h2 style="margin:0;" id="mainTitle">Lohnrechner</h2>
             <div style="display: flex; gap: 8px;">
-                <button class="small-btn" onclick="saveCalculation()" title="Speichern">💾</button>
+                <button id="saveBtn" class="small-btn" onclick="saveCalculation()" title="Speichern">💾</button>
+                <button id="pinBtn" class="small-btn" style="display: none;" onclick="pinSelected()"
+                    title="Pinnen">📌</button>
                 <button class="small-btn" onclick="toggleView()" id="viewBtn" title="Ansicht">📊</button>
                 <button class="small-btn" onclick="toggleTheme()" title="Theme">🌓</button>
             </div>
@@ -360,27 +413,43 @@
         </div>
     </div>
 
+    <div id="appToast" class="toast">
+        <span id="toastText">Eintrag gelöscht</span>
+        <button id="toastAction" class="undo-btn" onclick="undoDelete()">Rückgängig</button>
+    </div>
+
     <script>
-        const APP_VERSION = "v1.0.1";
+        const APP_VERSION = "v1.0.2";
         const CHANGELOG = {
+            "v1.0.2": "Alerts wurde durch Toasts ersetzt. Haptisches Feedback für speichern/löschen",
             "v1.0.1": "NEU: Export-Dateiname mit Zeitstempel, verbesserte Datensicherheit beim Import.",
             "v1.0.0": "Optimierung der Berechnung für das Steuerjahr 2026."
         };
 
         function checkUpdate() {
             const lastVersion = localStorage.getItem('lohn_app_version');
-
-            // Versionsnummer in der UI setzen
             document.getElementById('versionDisplay').innerText = APP_VERSION;
 
-            if (lastVersion !== APP_VERSION) {
-                const nachricht = CHANGELOG[APP_VERSION] || "Ein neues Update ist verfügbar!";
-
-                setTimeout(() => {
-                    alert(`Update auf ${APP_VERSION}\n\n${nachricht}`);
-                    localStorage.setItem('lohn_app_version', APP_VERSION);
-                }, 500);
+            if (lastVersion && lastVersion !== APP_VERSION) {
+                const nachricht = CHANGELOG[APP_VERSION] || "Neue Funktionen verfügbar!";
+                // Wir nutzen showToast, aber ohne automatischen Timeout (0 übergeben)
+                showUpdateBanner(`Update ${APP_VERSION}: ${nachricht}`);
             }
+            localStorage.setItem('lohn_app_version', APP_VERSION);
+        }
+
+        function showUpdateBanner(msg) {
+            const toast = document.getElementById('appToast');
+            const textSpan = document.getElementById('toastText');
+            const actionBtn = document.getElementById('toastAction');
+
+            clearTimeout(toastTimeout); // Timer stoppen, damit es stehen bleibt
+            textSpan.innerText = msg;
+            actionBtn.innerText = "OK";
+            actionBtn.onclick = () => toast.classList.remove('show');
+            actionBtn.style.display = 'block';
+
+            toast.classList.add('show');
         }
 
         function setTheme(t) {
@@ -440,18 +509,22 @@
             const calc = document.getElementById('calculatorView');
             const list = document.getElementById('listView');
             const btn = document.getElementById('viewBtn');
-            const title = document.getElementById('mainTitle');
+            const saveBtn = document.getElementById('saveBtn');
+            const pinBtn = document.getElementById('pinBtn');
 
             if (calc.style.display === 'none') {
                 calc.style.display = 'block';
                 list.style.display = 'none';
-                btn.innerText = '📊';
-                title.innerText = 'Lohnrechner';
+                btn.innerHTML = '📊';
+                saveBtn.style.display = 'flex';
+                pinBtn.style.display = 'none';
+                document.getElementById('mainTitle').innerText = 'Lohnrechner';
             } else {
                 calc.style.display = 'none';
                 list.style.display = 'block';
                 btn.innerHTML = '<span class="mirror-icon">✏️</span>';
-                title.innerText = 'Gehaltsliste';
+                saveBtn.style.display = 'none';
+                document.getElementById('mainTitle').innerText = 'Gehaltsliste';
                 renderList();
             }
         }
@@ -470,8 +543,10 @@
             );
 
             if (isDuplicate) {
-                alert("Diese Berechnung ist bereits in der Liste gespeichert.");
-                return; // Speichern abbrechen
+                // Haptisches Feedback für Fehler (kurz-lang)
+                if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+                showToast("Bereits vorhanden!");
+                return;
             }
 
             const entry = {
@@ -483,23 +558,18 @@
                 hours: hours + " Std./Wo.",
                 rawHours: parseFloat(hours),
                 weeks: weeks + " Wo./Jahr",
-                rawWeeks: parseFloat(weeks)
+                rawWeeks: parseFloat(weeks),
+                pinned: false
             };
 
             savedCalculations.push(entry);
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
 
-            if (document.getElementById('listView').style.display !== 'none') {
-                renderList();
-            } else {
-                alert("Berechnung gespeichert!");
-            }
-        }
+            // Haptisches Feedback für Erfolg (kurz)
+            if (navigator.vibrate) navigator.vibrate(50);
+            showToast("Berechnung gespeichert");
 
-        function deleteEntry(id) {
-            if (confirm("Diesen Eintrag wirklich löschen?")) {
-                savedCalculations = savedCalculations.filter(e => e.id !== id);
-                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+            if (document.getElementById('listView').style.display !== 'none') {
                 renderList();
             }
         }
@@ -519,6 +589,7 @@
             if (savedCalculations.length === 0) {
                 container.innerHTML = '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>';
                 if (hint) hint.style.display = 'none';
+                updateButtonVisibility();
                 return;
             } else {
                 if (hint) {
@@ -526,16 +597,20 @@
                 }
             }
 
+            savedCalculations.sort((a, b) => (b.pinned || false) - (a.pinned || false) || b.id - a.id);
+
             savedCalculations.forEach(e => {
                 const isSelected = selectedIds.includes(e.id);
+                const isPinned = e.pinned || false;
                 const card = document.createElement('div');
-                card.className = `save-card ${isSelected ? 'selected' : ''}`;
+                card.className = `save-card ${isSelected ? 'selected' : ''} ${isPinned ? 'pinned' : ''}`;
                 card.style.cursor = "pointer";
-
                 card.onclick = () => toggleSelect(e.id);
-                //card.onclick = () => loadEntry(e.id); // alternative Funktion (Eintrag wieder in Rechner laden)
+
+                const pinIcon = isPinned ? '<span style="position:absolute; top:-5px; left:-5px; font-size:0.8em;">📍</span>' : '';
 
                 card.innerHTML = `
+            ${pinIcon}
             <div style="pointer-events:none;">
                 <span class="save-data-left">${e.wage}</span>
                 <span class="save-label-small">${e.hours} | ${e.weeks}</span>
@@ -552,6 +627,7 @@
             });
 
             updateCompareView();
+            updateButtonVisibility();
         }
 
         function toggleSelect(id) {
@@ -577,118 +653,145 @@
 
             const item1 = savedCalculations.find(e => e.id === selectedIds[0]);
             const item2 = savedCalculations.find(e => e.id === selectedIds[1]);
-
-            // Hilfsfunktion um "1.234,56 €" in Zahl umzuwandeln
             const parseCurrency = (str) => parseFloat(str.replace(/[^-0-9,]/g, '').replace(',', '.')) || 0;
 
             const n1 = parseCurrency(item1.netto);
             const n2 = parseCurrency(item2.netto);
-            const b1 = parseCurrency(item1.brutto);
-            const b2 = parseCurrency(item2.brutto);
-
             const diffNetto = Math.abs(n1 - n2);
-            const diffBrutto = Math.abs(b1 - b2);
 
             banner.style.display = 'block';
             banner.innerHTML = `
-        <strong>Vergleich der Auswahl:</strong>
-        <div class="compare-grid">
-            <span>Diff. Netto:</span> <span>${diffNetto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
-            <span>Diff. Brutto:</span> <span>${diffBrutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
-        </div>
-    `;
+                <strong>Vergleich der Auswahl:</strong>
+                <div class="compare-grid">
+                    <span>Diff. Netto:</span> <span>${diffNetto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+                </div>
+            `;
         }
 
-        function loadEntry(id) {
-            const entry = savedCalculations.find(e => e.id === id);
-            if (entry) {
-                selectedIds = [];
-                document.getElementById('weeks').value = entry.rawWeeks;
-                document.getElementById('hoursPerWeek').value = entry.rawHours;
-                document.getElementById('hourlyWage').value = entry.rawWage;
+        function updateButtonVisibility() {
+            const pinBtn = document.getElementById('pinBtn');
+            const isListView = document.getElementById('listView').style.display !== 'none';
+            pinBtn.style.display = (isListView && selectedIds.length === 1) ? 'flex' : 'none';
+        }
 
-                calculate();
-                toggleView();
-            }
+        function pinSelected() {
+            if (selectedIds.length !== 1) return;
+            const idToPin = selectedIds[0];
+            savedCalculations = savedCalculations.map(e => {
+                if (e.id === idToPin) e.pinned = !e.pinned;
+                return e;
+            });
+            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+            renderList();
         }
 
         function exportLohnData() {
             const jetzt = new Date();
             const pad = (n) => String(n).padStart(2, '0');
-            const ts = `${jetzt.getFullYear()}-${pad(jetzt.getMonth() + 1)}-${pad(jetzt.getDate())}_${pad(jetzt.getHours())}-${pad(jetzt.getMinutes())}-${pad(jetzt.getSeconds())}`;
-
+            const ts = `${jetzt.getFullYear()}-${pad(jetzt.getMonth() + 1)}-${pad(jetzt.getDate())}_${pad(jetzt.getHours())}-${pad(jetzt.getMinutes())}`;
             const dataStr = JSON.stringify(savedCalculations);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
             a.download = `lohnrechner_backup_${ts}.json`;
-
-            document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         }
 
         function importLohnData() {
             const input = document.createElement("input");
             input.type = "file";
-            input.accept = "application/json";
             input.onchange = e => {
-                const file = e.target.files[0];
                 const reader = new FileReader();
                 reader.onload = event => {
                     try {
                         const imported = JSON.parse(event.target.result);
-
                         if (Array.isArray(imported)) {
-                            const validEntries = imported.filter(item => {
-                                return item.wage && item.hours && item.weeks && item.id;
-                            });
-
-                            if (validEntries.length === 0) {
-                                alert("Die Datei enthält keine gültigen Lohnrechner-Daten.");
-                                return;
-                            }
-
-                            const currentIds = new Set(savedCalculations.map(item => item.id));
-
-                            const newEntries = validEntries.filter(item => {
-                                const isIdDuplicate = currentIds.has(item.id);
-                                const isValueDuplicate = savedCalculations.some(s =>
-                                    s.rawWage === item.rawWage &&
-                                    s.rawHours === item.rawHours &&
-                                    s.rawWeeks === item.rawWeeks
-                                );
-                                return !isIdDuplicate && !isValueDuplicate;
-                            });
-
-                            if (newEntries.length === 0) {
-                                alert("Alle Einträge sind bereits vorhanden.");
-                                return;
-                            }
-
-                            if (confirm(`${newEntries.length} neue Einträge gefunden. Hinzufügen?`)) {
-                                savedCalculations = [...savedCalculations, ...newEntries];
-                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-                                renderList();
-                            }
+                            savedCalculations = imported;
+                            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                            renderList();
                         }
-                    } catch (err) {
-                        alert("Fehler: Die Datei ist kein gültiges JSON.");
-                    }
+                    } catch (err) { alert("Fehler beim Import!"); }
                 };
-                reader.readAsText(file);
+                reader.readAsText(e.target.files[0]);
             };
             input.click();
         }
 
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        let deleteTimeout = null;
 
-        window.onload = function () {
-            calculate();    // Aktuelle Eingaben berechnen
-            checkUpdate();  // Auf Updates prüfen
-        };
+        function deleteEntry(id) {
+            const index = savedCalculations.findIndex(e => e.id === id);
+            if (index === -1) return;
+
+            lastDeletedEntry = { data: savedCalculations[index], index: index };
+            savedCalculations.splice(index, 1);
+            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+
+            selectedIds = selectedIds.filter(sid => sid !== id);
+            renderList();
+
+            showToast("Eintrag gelöscht", "Rückgängig", undoDelete);
+        }
+
+        function undoDelete() {
+            if (!lastDeletedEntry) return;
+            savedCalculations.splice(lastDeletedEntry.index, 0, lastDeletedEntry.data);
+            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+            lastDeletedEntry = null;
+            document.getElementById('appToast').classList.remove('show');
+            renderList();
+        }
+
+        let lastDeletedEntry = null;
+        let toastTimeout = null;
+
+        function showToast(message, actionText = null, actionFn = null) {
+            const toast = document.getElementById('appToast');
+            const textSpan = document.getElementById('toastText');
+            const actionBtn = document.getElementById('toastAction');
+
+            // Falls ein Toast gerade verschwindet, sofort zurücksetzen
+            clearTimeout(toastTimeout);
+
+            textSpan.innerText = message;
+
+            if (actionText && actionFn) {
+                actionBtn.innerText = actionText;
+                actionBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    actionFn();
+                };
+                actionBtn.style.display = 'block';
+            } else {
+                actionBtn.style.display = 'none';
+            }
+
+            toast.classList.add('show');
+
+            // Nach 4 Sekunden ausblenden
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+        }
+
+        function showUndoToast() {
+            const toast = document.getElementById('undoToast');
+
+            // Falls noch ein alter Timer läuft (schnelles Löschen), diesen stoppen
+            clearTimeout(deleteTimeout);
+
+            toast.classList.add('show');
+
+            // Toast nach 5 Sekunden automatisch ausblenden
+            deleteTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+                lastDeletedEntry = null; // Endgültig weg
+            }, 5000);
+        }
+
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+        window.onload = function () { calculate(); checkUpdate(); };
     </script>
 </body>
 
