@@ -276,6 +276,12 @@
             margin-top: 5px;
             font-weight: bold;
         }
+
+        .mirror-icon {
+            display: inline-block;
+            transform: scaleX(-1);
+            /* Spiegelt das Icon horizontal */
+        }
     </style>
 </head>
 
@@ -442,7 +448,7 @@
             } else {
                 calc.style.display = 'none';
                 list.style.display = 'block';
-                btn.innerText = '✏️';
+                btn.innerHTML = '<span class="mirror-icon">✏️</span>';
                 title.innerText = 'Gehaltsliste';
                 renderList();
             }
