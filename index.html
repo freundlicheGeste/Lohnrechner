@@ -64,15 +64,12 @@
 
         .small-btn {
             cursor: pointer;
-            /* Festgelegte Größe für quadratische Optik */
             width: 42px;
             height: 42px;
             padding: 0;
-            /* Padding entfernen, damit das Icon zentriert bleibt */
             display: flex;
             align-items: center;
             justify-content: center;
-
             border-radius: 8px;
             border: 1px solid var(--input-border);
             background: var(--result-bg);
@@ -86,7 +83,6 @@
             transform: scale(0.95);
         }
 
-        /* Die Footer-Buttons in der Liste sollen Text behalten, daher dort keine festen Quadrate */
         .list-footer .small-btn {
             width: auto;
             height: auto;
@@ -267,60 +263,70 @@
             <div style="display: flex; gap: 8px;">
                 <button class="small-btn" onclick="saveCalculation()" title="Speichern">💾</button>
                 <button class="small-btn" onclick="toggleView()" id="viewBtn" title="Ansicht">📊</button>
-                <button class="small-btn" onclick="toggleTheme()">🌓</button>
+                <button class="small-btn" onclick="toggleTheme()" title="Theme">🌓</button>
             </div>
         </div>
 
         <div id="listView" style="display: none;">
-            <div class="section-title">Gespeicherte Vergleiche</div>
+            <div class="section-title" style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span>Gespeicherte Vergleiche</span>
+                <span style="font-size: 0.8em; opacity: 0.6; font-weight: normal; text-transform: none;">v1.0.5</span>
+            </div>
             <div id="savedList"></div>
-
-            <div class="list-footer">
-                <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
-                <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
-            </div>
         </div>
 
-        <div id="calculatorView">
-            <div class="input-group">
-                <label>Arbeitswochen / Jahr:</label>
-                <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()"
-                    onkeydown="if(event.key==='Enter') document.getElementById('hoursPerWeek').focus()">
-            </div>
-            <div class="input-group">
-                <label>Wochenstunden:</label>
-                <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()"
-                    onkeydown="if(event.key==='Enter') document.getElementById('hourlyWage').focus()">
-            </div>
-            <div class="input-group">
-                <label>Stundenlohn (€):</label>
-                <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()"
-                    onfocus="this.select()" onkeydown="if(event.key==='Enter') { this.blur(); calculate(); }">
-            </div>
-
-            <div class="result-card brutto-card">
-                <div class="res-label">Monatliches Brutto</div>
-                <div class="res-value" id="monthlyBrutto">0,00 €</div>
-            </div>
-
-            <div class="result-card netto-card">
-                <div class="res-label">Netto (Steuerklasse 4, BW)</div>
-                <div class="netto-value" id="monthlyNetto">0,00 €</div>
-            </div>
-
-            <div class="details">
-                <div class="section-title">Details Abzüge</div>
-                <div class="info-row"><span>Krankenv. (8,1% + 1,1% Zusatz):</span><span id="kv">0 €</span></div>
-                <div class="info-row"><span>Rentenvers. (9,3%):</span><span id="rv">0 €</span></div>
-                <div class="info-row"><span>Pflegevers. (2,3%):</span><span id="pv">0 €</span></div>
-                <div class="info-row"><span>Arbeitslosenv. (1,3%):</span><span id="av">0 €</span></div>
-                <div class="info-row"><span>Lohnsteuer (Stkl. 4):</span><span id="lst">0 €</span></div>
-            </div>
-
-            <div class="info-footer">
-                Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
-            </div>
+        <div class="list-footer">
+            <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
+            <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
         </div>
+    </div>
+
+    <div id="calculatorView">
+        <div style="text-align: center; margin-top: 10px;">
+            <button class="small-btn" onclick="shareResults()"
+                style="width: 100%; height: auto; padding: 10px; font-size: 0.9em;">
+                🔗 Ergebnis teilen
+            </button>
+        </div>
+        <div class="input-group">
+            <label>Arbeitswochen / Jahr:</label>
+            <input type="number" id="weeks" value="52" oninput="calculate()" onfocus="this.select()"
+                onkeydown="if(event.key==='Enter') document.getElementById('hoursPerWeek').focus()">
+        </div>
+        <div class="input-group">
+            <label>Wochenstunden:</label>
+            <input type="number" id="hoursPerWeek" value="37.5" oninput="calculate()" onfocus="this.select()"
+                onkeydown="if(event.key==='Enter') document.getElementById('hourlyWage').focus()">
+        </div>
+        <div class="input-group">
+            <label>Stundenlohn (€):</label>
+            <input type="number" id="hourlyWage" value="18.50" step="0.10" oninput="calculate()" onfocus="this.select()"
+                onkeydown="if(event.key==='Enter') { this.blur(); calculate(); }">
+        </div>
+
+        <div class="result-card brutto-card">
+            <div class="res-label">Monatliches Brutto</div>
+            <div class="res-value" id="monthlyBrutto">0,00 €</div>
+        </div>
+
+        <div class="result-card netto-card">
+            <div class="res-label">Netto (Steuerklasse 4, BW)</div>
+            <div class="netto-value" id="monthlyNetto">0,00 €</div>
+        </div>
+
+        <div class="details">
+            <div class="section-title">Details Abzüge</div>
+            <div class="info-row"><span>Krankenv. (8,1% + 1,1% Zusatz):</span><span id="kv">0 €</span></div>
+            <div class="info-row"><span>Rentenvers. (9,3%):</span><span id="rv">0 €</span></div>
+            <div class="info-row"><span>Pflegevers. (2,3%):</span><span id="pv">0 €</span></div>
+            <div class="info-row"><span>Arbeitslosenv. (1,3%):</span><span id="av">0 €</span></div>
+            <div class="info-row"><span>Lohnsteuer (Stkl. 4):</span><span id="lst">0 €</span></div>
+        </div>
+
+        <div class="info-footer">
+            Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
+        </div>
+    </div>
     </div>
 
     <script>
@@ -398,25 +404,22 @@
         }
 
         function saveCalculation() {
-            const weeks = document.getElementById('weeks').value;
-            const hours = document.getElementById('hoursPerWeek').value;
-            const wage = document.getElementById('hourlyWage').value;
-            const brutto = document.getElementById('monthlyBrutto').innerText;
-            const netto = document.getElementById('monthlyNetto').innerText;
+            const weeks = parseFloat(document.getElementById('weeks').value) || 0;
+            const hours = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
+            const wage = parseFloat(document.getElementById('hourlyWage').value) || 0;
 
+            // Wir holen nicht den Text aus dem UI, sondern berechnen/nutzen die Rohdaten
             const entry = {
                 id: Date.now(),
-                wage: wage + " €/Std.",
-                netto: netto,
-                brutto: brutto,
-                hours: hours + " Std./Wo.",
-                weeks: weeks + " Wo./Jahr"
+                wage: wage,
+                hours: hours,
+                weeks: weeks,
+                timestamp: new Date().toISOString()
             };
 
             savedCalculations.push(entry);
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
 
-            // Sofortiges Update der Liste, falls man in der Listenansicht speichert
             if (document.getElementById('listView').style.display !== 'none') {
                 renderList();
             } else {
@@ -425,7 +428,7 @@
         }
 
         function deleteEntry(id) {
-            if (confirm("Diesen Vergleich wirklich löschen?")) {
+            if (confirm("Diesen Eintrag wirklich löschen?")) {
                 savedCalculations = savedCalculations.filter(e => e.id !== id);
                 localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
                 renderList();
@@ -434,48 +437,56 @@
 
         function renderList() {
             const container = document.getElementById('savedList');
-            container.innerHTML = savedCalculations.length === 0 ? '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
+            container.innerHTML = savedCalculations.length === 0 ?
+                '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>' : '';
 
             savedCalculations.forEach(e => {
+                // Hier findet die Formatierung erst statt
+                const brutto = (e.weeks * e.hours * e.wage) / 12;
+                // Vereinfachte Netto-Anzeige für die Liste (Logik wie in calculate())
+                const netto = brutto * 0.65; // Grober Richtwert für die Listenübersicht
+
                 container.innerHTML += `
         <div class="save-card" onclick="loadEntry(${e.id})" style="cursor:pointer;">
             <div style="pointer-events:none;">
-                <span class="save-data-left">${e.wage}</span>
-                <span class="save-label-small">${e.hours} | ${e.weeks}</span>
+                <span class="save-data-left">${e.wage.toFixed(2)} €/Std.</span>
+                <span class="save-label-small">${e.hours} Std./Wo. | ${e.weeks} Wo.</span>
             </div>
             <div style="display: flex; align-items: center;">
                 <div style="text-align: right; pointer-events:none;">
-                    <span class="save-data-right">${e.netto}</span>
-                    <span class="save-label-small">Brutto: ${e.brutto}</span>
+                    <span class="save-data-right">${brutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+                    <span class="save-label-small">Monats-Brutto</span>
                 </div>
                 <button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(${e.id})">🗑️</button>
             </div>
-        </div>
-    `;
+        </div>`;
             });
         }
 
         function loadEntry(id) {
             const entry = savedCalculations.find(e => e.id === id);
             if (entry) {
-                // Werte zurück in die Felder schreiben (Zahlen extrahieren)
                 document.getElementById('weeks').value = parseFloat(entry.weeks);
                 document.getElementById('hoursPerWeek').value = parseFloat(entry.hours);
                 document.getElementById('hourlyWage').value = parseFloat(entry.wage);
 
-                // Neu berechnen und Ansicht wechseln
                 calculate();
                 toggleView();
             }
         }
 
         function exportLohnData() {
+            const jetzt = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const ts = `${jetzt.getFullYear()}-${pad(jetzt.getMonth() + 1)}-${pad(jetzt.getDate())}_${pad(jetzt.getHours())}-${pad(jetzt.getMinutes())}-${pad(jetzt.getSeconds())}`;
+
             const dataStr = JSON.stringify(savedCalculations);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "lohnrechner_backup.json";
+            a.download = `lohnrechner_backup_${ts}.json`;
+
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -492,13 +503,23 @@
                 reader.onload = event => {
                     try {
                         const imported = JSON.parse(event.target.result);
+
+                        // Validierung: Ist es ein Array und enthalten die Objekte die Pflichtfelder?
                         if (Array.isArray(imported)) {
-                            // Filtern: Nur Einträge nehmen, deren ID noch NICHT vorhanden ist
+                            const validEntries = imported.filter(item => {
+                                return item.wage && item.hours && item.weeks && item.id;
+                            });
+
+                            if (validEntries.length === 0) {
+                                alert("Die Datei enthält keine gültigen Lohnrechner-Daten.");
+                                return;
+                            }
+
                             const currentIds = new Set(savedCalculations.map(item => item.id));
-                            const newEntries = imported.filter(item => !currentIds.has(item.id));
+                            const newEntries = validEntries.filter(item => !currentIds.has(item.id));
 
                             if (newEntries.length === 0) {
-                                alert("Keine neuen Einträge gefunden (alle bereits vorhanden).");
+                                alert("Alle Einträge sind bereits vorhanden.");
                                 return;
                             }
 
@@ -509,12 +530,31 @@
                             }
                         }
                     } catch (err) {
-                        alert("Fehler beim Importieren: Ungültiges Format");
+                        alert("Fehler: Die Datei ist kein gültiges JSON.");
                     }
                 };
                 reader.readAsText(file);
             };
             input.click();
+        }
+
+        function shareResults() {
+            const netto = document.getElementById('monthlyNetto').innerText;
+            const brutto = document.getElementById('monthlyBrutto').innerText;
+            const wage = document.getElementById('hourlyWage').value;
+
+            const text = `Mein Lohn-Check:\nStundenlohn: ${wage} €\nBrutto: ${brutto}\nNetto: ${netto}\n(Gerechnet mit Lohnrechner BW 2026)`;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Lohnrechner Ergebnis',
+                    text: text
+                }).catch(console.error);
+            } else {
+                // Fallback: In die Zwischenablage kopieren
+                navigator.clipboard.writeText(text);
+                alert("Ergebnis wurde in die Zwischenablage kopiert!");
+            }
         }
 
         if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
