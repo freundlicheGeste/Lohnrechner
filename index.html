@@ -45,7 +45,8 @@
             flex-direction: column;
             align-items: center;
             transition: all 0.3s ease;
-            overscroll-behavior-y: contain; /* Runterziehen zum neu laden blocken */
+            overscroll-behavior-y: contain;
+            /* Runterziehen zum neu laden blocken */
         }
 
         .container {
@@ -556,44 +557,25 @@
             if (localStorage.getItem('lohn_theme_bw') === 'dark') setTheme('dark');
 
             const urlParams = new URLSearchParams(window.location.search);
-  /*  const mode = urlParams.get('mode');
+            const mode = urlParams.get('mode');
 
-    if (mode === 'list') {
-        // Falls die App mit ?mode=list gestartet wurde, wechsle sofort zur Liste
-        toggleView();
-    } else if (mode === 'dev') {
-        // Öffnet direkt das Dev-Menü
-        const devMenu = document.getElementById('devMenu');
-        if (devMenu) {
-            devMenu.style.display = 'flex';
-            showToast("Entwickler-Modus via Shortcut aktiv");
-        }
+            if (mode === 'list') {
+                // Falls die App mit ?mode=list gestartet wurde, wechsle sofort zur Liste
+                toggleView();
+            } else if (mode === 'dev') {
+                // PIN-Abfrage für den Dev-Modus via Shortcut
+                const pin = prompt("Bitte Entwickler-PIN eingeben:");
 
-*/
-        const mode = urlParams.get('mode');
-
-    if (mode === 'list') {
-        toggleView();
-    } else if (mode === 'dev') {
-        // PIN-Abfrage für den Dev-Modus via Shortcut
-        const pin = prompt("Bitte Entwickler-PIN eingeben:");
-        
-        if (pin === "1234") { // Ersetze 1234 durch deine Wunsch-PIN
-            const devMenu = document.getElementById('devMenu');
-            if (devMenu) {
-                devMenu.style.display = 'flex';
-                showToast("Entwickler-Modus freigeschaltet");
+                if (pin === "1234") { // Ersetze 1234 durch deine Wunsch-PIN
+                    const devMenu = document.getElementById('devMenu');
+                    if (devMenu) {
+                        devMenu.style.display = 'flex';
+                        showToast("Entwickler-Modus freigeschaltet");
+                    }
+                } else if (pin !== null) {
+                    alert("Falsche PIN!");
+                }
             }
-        } else if (pin !== null) {
-            alert("Falsche PIN!");
-        }
-    }
-    }
-
-    // URL aufräumen (entfernt ?mode=... aus der Adresszeile)
-    if (mode) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
         };
 
         function checkUpdate() {
