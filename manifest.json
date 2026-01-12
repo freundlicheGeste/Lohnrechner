@@ -33,6 +33,13 @@
       "description": "Direkt zur Übersicht der gespeicherten Löhne",
       "url": "./index.html?mode=list",
       "icons": [{ "src": "icon.png", "sizes": "192x192" }]
-    }
+    },
+  {
+    "name": "Entwickler-Modus",
+    "short_name": "Dev",
+    "description": "Öffnet direkt das Entwickler-Menü",
+    "url": "./index.html?mode=dev",
+    "icons": [{ "src": "icon.png", "sizes": "192x192" }]
+  }
   ]
 }
