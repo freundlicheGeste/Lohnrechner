@@ -556,9 +556,23 @@
             if (localStorage.getItem('lohn_theme_bw') === 'dark') setTheme('dark');
 
             const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('mode') === 'list') {
+    const mode = urlParams.get('mode');
+
+    if (mode === 'list') {
         // Falls die App mit ?mode=list gestartet wurde, wechsle sofort zur Liste
-        toggleView(); 
+        toggleView();
+    } else if (mode === 'dev') {
+        // Öffnet direkt das Dev-Menü
+        const devMenu = document.getElementById('devMenu');
+        if (devMenu) {
+            devMenu.style.display = 'flex';
+            showToast("Entwickler-Modus via Shortcut aktiv");
+        }
+    }
+
+    // URL aufräumen (entfernt ?mode=... aus der Adresszeile)
+    if (mode) {
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
         };
 
