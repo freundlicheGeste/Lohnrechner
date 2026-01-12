@@ -30,9 +30,21 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch Event
+// Fetch Event - Schnell & Aktualisierend
 self.addEventListener('fetch', e => {
   e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+    caches.match(e.request).then(cachedResponse => {
+      const networkFetch = fetch(e.request).then(networkResponse => {
+        // Hintergrund-Update des Caches
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(e.request, networkResponse.clone());
+        });
+        return networkResponse;
+      });
+      // Gib Cache zurück, falls vorhanden, sonst warte aufs Netzwerk
+      return cachedResponse || networkFetch;
+    }).catch(() => {
+        // Fallback falls beides fehlschlägt (z.B. Offline & nicht im Cache)
+    })
   );
 });
