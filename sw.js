@@ -1,9 +1,9 @@
-const CACHE_NAME = 'lohnrechner-v1.0.3'; // Ändere die Nummer bei JEDEM Update!
+const CACHE_NAME = 'lohnrechner-v1.0.4'; // Ändere die Nummer bei JEDEM Update!
 const assets = [
   './',
   './index.html',
   './manifest.json',
-  './lohnrechner.png'
+  './icon.png'
 ];
 
 // Install Event
