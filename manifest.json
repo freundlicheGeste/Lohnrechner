@@ -1,6 +1,7 @@
 {
   "name": "Lohn-Rechner",
   "short_name": "Lohnrechner",
+  "description": "Lohnvergleichsrechner für Baden-Württemberg 2026 (Steuerklasse 4)",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#f4f4f9",
