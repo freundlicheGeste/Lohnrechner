@@ -217,7 +217,8 @@
         }
 
         .save-card.pinned {
-            border-left: 5px solid var(--accent-color);
+            border-left: 5px solid var(--blue-accent);
+            background: var(--netto-bg);
         }
 
         .save-data-left {
@@ -308,14 +309,6 @@
             border-bottom: 1px dashed var(--input-border);
         }
 
-        .pin-marker {
-            position: absolute;
-            top: -8px;
-            left: 8px;
-            font-size: 1.1em;
-            z-index: 5;
-        }
-
         .mirror-icon {
             display: inline-block;
             transform: scaleX(-1);
@@ -326,7 +319,7 @@
             position: fixed;
             bottom: 30px;
             left: 50%;
-            transform: translateX(-50%) translateY(250px);
+            transform: translateX(-50%) translateY(550px);
             background: var(--container-bg);
             color: var(--text-color);
             padding: 16px 20px;
@@ -335,7 +328,7 @@
             flex-direction: column;
             /* Für mehrzeilige Update-Infos */
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
             border: 1px solid var(--accent-color);
             z-index: 2000;
@@ -349,10 +342,35 @@
             white-space: pre-line;
             /* Erlaubt Zeilenumbrüche \n */
             text-align: center;
+            justify-content: center;
+            /* Zentriert Text vertikal */
+            overflow: hidden;
+            /* Progressbar Begrenzung */
         }
 
         .toast.show {
             transform: translateX(-50%) translateY(0);
+        }
+
+        /* Styling für den Titel im Update Toast */
+        .toast-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            display: block;
+            width: 100%;
+            color: var(--accent-color);
+            margin-top: -10px;
+            margin-bottom: 0;
+        }
+
+        /* Die Trennlinie im Update Toast */
+        .toast-divider {
+            border: 0;
+            border-top: 1px solid var(--input-border);
+            width: 100%;
+            margin: 0;
+            opacity: 0.5;
         }
 
         .toast-content {
@@ -361,6 +379,20 @@
             gap: 10px;
             width: 100%;
             justify-content: center;
+        }
+
+        /* Versteckt den Container komplett, wenn keine Buttons drin sind */
+        .toast-button-container:empty {
+            display: none;
+        }
+
+        .toast-button-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 5px;
+            /* Abstand zum Text nur wenn Buttons da sind */
         }
 
         .toast-btn {
@@ -372,10 +404,22 @@
             font-size: 1.2em;
             cursor: pointer;
             text-transform: uppercase;
-            padding: 8px 15px;
-            margin-top: 5px;
-            width: 90%;
+            padding: 12px 15px;
+            width: 80%;
             /* Buttonbreite im Toast */
+        }
+
+        /* Der Fortschrittsbalken */
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--accent-color);
+            width: 100%;
+            transform-origin: left;
+            transition: transform linear;
+            display: none;
         }
 
         .info-footer {
@@ -431,14 +475,16 @@
             </div>
             <div class="input-group">
                 <label>Wochenstunden:</label>
-                <input type="number" id="hoursPerWeek" value="37.5" step="0.5" onkeypress="return isNumberKey(event)"
-                    onpaste="validatePaste(event)" oninput="calculate()" onfocus="this.select()">
+                <input lang="en-150" type="number" id="hoursPerWeek" value="37.5" step="0.5"
+                    onkeypress="return isNumberKey(event)" onpaste="validatePaste(event)" oninput="calculate()"
+                    onfocus="this.select()">
             </div>
             <div class="input-group">
                 <label>Stundenlohn (€):</label>
-                <input type="number" id="hourlyWage" value="18.50" step="0.10" onkeypress="return isNumberKey(event)"
-                    onpaste="validatePaste(event)" oninput="calculate()" onfocus="this.select()"
-                    onkeydown="if(event.key==='Enter') { this.blur(); }">
+                <input lang="en-150" type="number" id="hourlyWage" value="18.50" step="0.10"
+                    onkeypress="return isNumberKey(event)" onpaste="validatePaste(event)" oninput="calculate()"
+                    onfocus="this.select()" onkeydown="if(event.key==='Enter') { this.blur(); }"
+                    onblur="this.value = parseFloat(this.value).toFixed(2)">
             </div>
 
             <div class="result-card brutto-card">
@@ -463,10 +509,9 @@
             <div class="info-footer">
                 Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
                 <div id="devMenu"
-                    style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 10px; border-radius: 8px;">
-                    <button onclick="forceUpdateApp()" class="toast-btn" style="margin-bottom:5px;">🔄 Cache leeren &
-                        Service Worker Reset</button>
-                    <button onclick="showLastChangelog()" class="toast-btn">📋 Letztes Update anzeigen</button>
+                    style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 8px; flex-direction: column; gap: 10px; align-items: center;">
+                    <button onclick="showLastChangelog()" class="toast-btn">📋 Changelog</button>
+                    <button onclick="forceUpdateApp()" class="toast-btn">🔄 Reset Cache</button>
                 </div>
             </div>
         </div>
@@ -474,14 +519,14 @@
 
     <div id="appToast" class="toast">
         <span id="toastText"></span>
-        <button id="toastAction" class="toast-btn"></button>
     </div>
 
     <script>
         // --- 1. GLOBALE VARIABLEN & DATEN ---
-        const APP_VERSION = "v1.0.4";
+        const APP_VERSION = "v1.0.5";
         const CHANGELOG = {
-            "v1.0.4": "Inputbox Fix, Dev Klick Fix, ",
+            "v1.0.5": "Neue Toast-Logik mit Undo & Progress-Bar",
+            "v1.0.4": "- Inputbox lang=en, bei Lohn 2stellig nach Komma\n- Dev Klick Optimierung\n- Pin Icon für Listeneintrag entfernt",
             "v1.0.3": "Fix: Inputfelder (nur Zahlen), Pin Icon + Vergleichselement",
             "v1.0.2": "Alerts wurde durch Toasts ersetzt. Haptisches Feedback & Geheim-Menü für Updates.",
             "v1.0.1": "Export-Dateiname mit Zeitstempel, verbesserte Datensicherheit beim Import.",
@@ -518,22 +563,21 @@
         }
 
         function showUpdateBanner(msg) {
-            const toast = document.getElementById('appToast');
-            const textSpan = document.getElementById('toastText');
-            const actionBtn = document.getElementById('toastAction');
+            let formattedMsg = "";
+            const parts = msg.split('\n\n');
 
-            clearTimeout(toastTimeout);
-            textSpan.innerText = msg;
-            actionBtn.innerText = "OK";
-
-            // Toast entfernen nach Klick
-            actionBtn.onclick = (e) => {
-                e.stopPropagation();
-                toast.classList.remove('show');
-            };
-
-            actionBtn.style.display = 'block';
-            toast.classList.add('show');
+            if (parts.length > 1) {
+                const title = parts[0];
+                const content = parts.slice(1).join('\n\n');
+                formattedMsg = `
+            <span class="toast-title">${title}</span>
+            <hr class="toast-divider">
+            <div style="width: 100%; text-align: center;">${content}</div>
+        `;
+            } else {
+                formattedMsg = msg;
+            }
+            showToast(formattedMsg, "OK");
         }
 
         async function forceUpdateApp() {
@@ -551,14 +595,14 @@
             var devMenu = document.getElementById('devMenu');
 
             // Prüfen, ob der Modus bereits aktiv ist
-            if (devMenu.style.display === 'block') {
+            if (devMenu.style.display === 'flex') {
                 showToast("Entwickler-Modus bereits aktiviert");
                 return; // Funktion hier abbrechen
             }
 
             devClickCount++;
             if (devClickCount >= 5) {
-                devMenu.style.display = 'block';
+                devMenu.style.display = 'flex';
                 showToast("Entwickler-Modus aktiv");
                 devClickCount = 0;
             }
@@ -692,6 +736,13 @@
                 updateButtonVisibility(); return;
             }
 
+            const hint = document.getElementById('listHint');
+            if (savedCalculations.length >= 2) {
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+
             savedCalculations.sort((a, b) => (b.pinned || false) - (a.pinned || false) || b.id - a.id);
 
             savedCalculations.forEach(e => {
@@ -706,7 +757,6 @@
                 };
 
                 card.innerHTML = `
-            ${isPinned ? '<span class="pin-marker">📌</span>' : ''}
             <div style="flex-grow: 1; display: flex; flex-direction: column;">
                 <span class="save-data-left">${e.wage}</span>
                 <span class="save-label-small">${e.hours} | ${e.weeks}</span>
@@ -770,35 +820,87 @@
 
         function pinSelected() {
             if (selectedIds.length !== 1) return;
+
             const idToPin = selectedIds[0];
-            savedCalculations = savedCalculations.map(e => { if (e.id === idToPin) e.pinned = !e.pinned; return e; });
+            let wasPinned = false;
+
+            savedCalculations = savedCalculations.map(e => {
+                if (e.id === idToPin) {
+                    // Wir prüfen den aktuellen Status VOR dem Wechseln
+                    if (!e.pinned) {
+                        wasPinned = true; // Merken, dass wir jetzt pinnen
+                    }
+                    e.pinned = !e.pinned;
+                }
+                return e;
+            });
+
+            // Nur wenn die Karte gerade erst gepinnt wurde, Markierung aufheben
+            if (wasPinned) {
+                selectedIds = [];
+            }
+
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
             renderList();
         }
 
         // --- 7. IMPORT / EXPORT ---
         function exportLohnData() {
-            const ts = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+            // Erstellt einen Zeitstempel in der lokalen Zeitzone (ISO-Format angepasst)
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(now - offset).toISOString().slice(0, 16).replace(/[:T]/g, '-');
+
             const blob = new Blob([JSON.stringify(savedCalculations)], { type: "application/json" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = `lohnrechner_backup_${ts}.json`; a.click();
+            a.download = `lohnrechner_backup_${localISOTime}.json`;
+            a.click();
+
+            showToast(`${savedCalculations.length} Einträge exportiert`);
         }
 
         function importLohnData() {
             const input = document.createElement("input");
             input.type = "file";
+            input.accept = ".json";
             input.onchange = e => {
                 const reader = new FileReader();
                 reader.onload = ev => {
                     try {
                         const imported = JSON.parse(ev.target.result);
-                        if (Array.isArray(imported)) {
-                            savedCalculations = imported;
-                            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-                            renderList();
+                        if (!Array.isArray(imported)) return showToast("Ungültiges Format!");
+
+                        const totalImported = imported.length;
+                        const existingIds = new Set(savedCalculations.map(c => c.id));
+                        const uniqueNew = imported.filter(c => !existingIds.has(c.id));
+                        const skipped = totalImported - uniqueNew.length;
+
+                        // LOGIK-FIX: Wenn alles schon da ist
+                        if (uniqueNew.length === 0 && totalImported > 0) {
+                            showToast(`Alle ${totalImported} Einträge bereits vorhanden.`);
+                            return;
                         }
-                    } catch (err) { alert("Fehler beim Import!"); }
+
+                        // Ansonsten: Fragen
+                        showToast(
+                            `Import: ${totalImported} Einträge gefunden.\n(${skipped} bereits vorhanden)`,
+                            "Hinzufügen",
+                            () => {
+                                savedCalculations = [...savedCalculations, ...uniqueNew];
+                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                                renderList();
+                                showToast(`${uniqueNew.length} neu importiert, ${skipped} übersprungen`);
+                            },
+                            "Ersetzen",
+                            () => {
+                                savedCalculations = imported;
+                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                                renderList();
+                                showToast("Liste komplett ersetzt");
+                            }
+                        );
+                    } catch (err) { showToast("Fehler beim Import!"); }
                 };
                 reader.readAsText(e.target.files[0]);
             };
@@ -806,31 +908,74 @@
         }
 
         // --- 8. FEEDBACK & TOASTS ---
-        function showToast(message, actionText = null, actionFn = null) {
+        function showToast(message, actionText = null, actionFn = null, secondaryText = null, secondaryFn = null) {
             const toast = document.getElementById('appToast');
             const textSpan = document.getElementById('toastText');
-            const actionBtn = document.getElementById('toastAction');
 
-            // Wenn der aktuelle Toast ein Update-Banner ist (OK-Button), 
-            // dann lassen wir ihn stehen und ignorieren kurze Meldungen
-            if (actionBtn.innerText === "OK" && toast.classList.contains('show')) {
-                console.log("Update-Banner hat Priorität");
-                return;
+            // Container & Progressbar suchen/erstellen
+            let btnContainer = toast.querySelector('.toast-button-container');
+            if (!btnContainer) {
+                btnContainer = document.createElement('div');
+                btnContainer.className = 'toast-button-container';
+                toast.appendChild(btnContainer);
+            }
+            let progressBar = toast.querySelector('.toast-progress');
+            if (!progressBar) {
+                progressBar = document.createElement('div');
+                progressBar.className = 'toast-progress';
+                toast.appendChild(progressBar);
             }
 
-            clearTimeout(toastTimeout);
-            textSpan.innerText = message;
+            // Update-Banner Schutz (OK-Toast blockiert Info, aber nicht Löschen)
+            if (toast.classList.contains('show') && btnContainer.classList.contains('is-persistent') && !actionText && !message.includes('gelöscht')) return;
 
-            if (actionText && actionFn) {
-                actionBtn.innerText = actionText;
-                actionBtn.onclick = (e) => { e.stopPropagation(); actionFn(); };
-                actionBtn.style.display = 'block';
-            } else {
-                actionBtn.style.display = 'none';
+            clearTimeout(toastTimeout);
+
+            // HTML oder Text setzen
+            if (message.includes('<span') || message.includes('<div')) textSpan.innerHTML = message;
+            else textSpan.innerText = message;
+
+            // Reset
+            btnContainer.innerHTML = '';
+            btnContainer.classList.remove('is-persistent');
+            progressBar.style.display = 'none';
+            progressBar.style.transition = 'none';
+            progressBar.style.transform = 'scaleX(1)';
+
+            // Buttons bauen
+            if (actionText) {
+                btnContainer.classList.add('is-persistent');
+                const b1 = document.createElement('button');
+                b1.className = 'toast-btn';
+                b1.innerText = actionText;
+                b1.onclick = (e) => { e.stopPropagation(); if (actionFn) actionFn(); toast.classList.remove('show'); };
+                btnContainer.appendChild(b1);
+
+                if (secondaryText) {
+                    const b2 = document.createElement('button');
+                    b2.className = 'toast-btn';
+                    b2.style.border = '1px solid #ff4444';
+                    b2.style.color = '#ff4444';
+                    b2.style.background = 'rgba(255, 68, 68, 0.1)';
+                    b2.innerText = secondaryText;
+                    b2.onclick = (e) => { e.stopPropagation(); if (secondaryFn) secondaryFn(); toast.classList.remove('show'); };
+                    btnContainer.appendChild(b2);
+                }
             }
 
             toast.classList.add('show');
-            toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
+
+            // Timer Logik (Import & Update bleiben persistent)
+            const isPersistent = (actionText === "OK") || (actionText && secondaryText);
+            if (!isPersistent) {
+                const duration = actionText ? 8000 : 4000;
+                progressBar.style.display = 'block';
+                setTimeout(() => {
+                    progressBar.style.transition = `transform ${duration}ms linear`;
+                    progressBar.style.transform = 'scaleX(0)';
+                }, 10);
+                toastTimeout = setTimeout(() => toast.classList.remove('show'), duration);
+            }
         }
 
         function deleteEntry(id) {
@@ -880,7 +1025,7 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                showUpdateBanner("App wurde aktualisiert. Bitte kurz neu starten.");
+                showToast("App wurde aktualisiert. Bitte kurz neu starten.");
             });
         }
     </script>
