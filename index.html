@@ -6,8 +6,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#ff8c00">
-    <link rel="apple-touch-icon" href="lohnrechner.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="lohnrechner.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lohn- & Netto-Rechner BW</title>
@@ -328,7 +328,6 @@
             left: 50%;
             transform: translateX(-50%) translateY(250px);
             background: var(--container-bg);
-            /* Etwas kontrastreicher */
             color: var(--text-color);
             padding: 16px 20px;
             border-radius: 12px;
@@ -364,18 +363,19 @@
             justify-content: center;
         }
 
-        .undo-btn {
+        .toast-btn {
             color: var(--accent-color);
             background: var(--result-bg);
             border: 1px solid var(--accent-color);
             border-radius: 6px;
             font-weight: bold;
+            font-size: 1.2em;
             cursor: pointer;
             text-transform: uppercase;
             padding: 8px 15px;
             margin-top: 5px;
-            width: 100%;
-            /* Button über ganze Breite im Toast */
+            width: 90%;
+            /* Buttonbreite im Toast */
         }
 
         .info-footer {
@@ -414,7 +414,7 @@
             </div>
             <p id="listHint"
                 style="font-size: 0.75em; font-style: italic; opacity: 0.7; text-align: center; margin-top: -2px;">
-                Tippe zwei Einträge zum Vergleichen
+                Tippe zwei Einträge an zum Vergleichen
             </p>
             <div id="savedList"></div>
             <div class="list-footer">
@@ -437,7 +437,8 @@
             <div class="input-group">
                 <label>Stundenlohn (€):</label>
                 <input type="number" id="hourlyWage" value="18.50" step="0.10" onkeypress="return isNumberKey(event)"
-                    onpaste="validatePaste(event)" oninput="calculate()" onfocus="this.select()">
+                    onpaste="validatePaste(event)" oninput="calculate()" onfocus="this.select()"
+                    onkeydown="if(event.key==='Enter') { this.blur(); }">
             </div>
 
             <div class="result-card brutto-card">
@@ -463,9 +464,9 @@
                 Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
                 <div id="devMenu"
                     style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 10px; border-radius: 8px;">
-                    <button onclick="forceUpdateApp()" class="undo-btn" style="margin-bottom:5px;">🔄 Cache leeren &
+                    <button onclick="forceUpdateApp()" class="toast-btn" style="margin-bottom:5px;">🔄 Cache leeren &
                         Service Worker Reset</button>
-                    <button onclick="showLastChangelog()" class="undo-btn">📋 Letztes Update anzeigen</button>
+                    <button onclick="showLastChangelog()" class="toast-btn">📋 Letztes Update anzeigen</button>
                 </div>
             </div>
         </div>
@@ -473,18 +474,20 @@
 
     <div id="appToast" class="toast">
         <span id="toastText"></span>
-        <button id="toastAction" class="undo-btn"></button>
+        <button id="toastAction" class="toast-btn"></button>
     </div>
 
     <script>
         // --- 1. GLOBALE VARIABLEN & DATEN ---
-        const APP_VERSION = "v1.0.3";
+        const APP_VERSION = "v1.0.4";
         const CHANGELOG = {
-            "v1.0.3": "Fix: Inputfelder (Zahlen), VZ TZ Badge für Einträge.",
+            "v1.0.4": "Inputbox Fix, Dev Klick Fix, ",
+            "v1.0.3": "Fix: Inputfelder (nur Zahlen), Pin Icon + Vergleichselement",
             "v1.0.2": "Alerts wurde durch Toasts ersetzt. Haptisches Feedback & Geheim-Menü für Updates.",
             "v1.0.1": "Export-Dateiname mit Zeitstempel, verbesserte Datensicherheit beim Import.",
             "v1.0.0": "Optimierung der Berechnung für das Steuerjahr 2026."
         };
+
         let savedCalculations = JSON.parse(localStorage.getItem('lohn_saved')) || [];
         let selectedIds = [];
         let lastDeletedEntry = null;
@@ -501,26 +504,36 @@
         function checkUpdate() {
             const lastVersion = localStorage.getItem('lohn_app_version');
             document.getElementById('versionDisplay').innerText = APP_VERSION;
+            // erster Check für Erstinstallation, da lastVersion null
             if (lastVersion && lastVersion !== APP_VERSION) {
                 const nachricht = CHANGELOG[APP_VERSION] || "Neue Funktionen verfügbar!";
-                // \n\n für die gewünschte Leerzeile nach dem Doppelpunkt
                 showUpdateBanner(`Update ${APP_VERSION}:\n\n${nachricht}`);
             }
             localStorage.setItem('lohn_app_version', APP_VERSION);
         }
 
-        function devClick() {
-            devClickCount++;
-            if (devClickCount >= 5) {
-                document.getElementById('devMenu').style.display = 'block';
-                showToast("Entwickler-Modus aktiv");
-                devClickCount = 0;
-            }
-        }
-
         function showLastChangelog() {
             const nachricht = CHANGELOG[APP_VERSION] || "Keine Info verfügbar.";
             showUpdateBanner(`Update ${APP_VERSION}:\n\n${nachricht}`);
+        }
+
+        function showUpdateBanner(msg) {
+            const toast = document.getElementById('appToast');
+            const textSpan = document.getElementById('toastText');
+            const actionBtn = document.getElementById('toastAction');
+
+            clearTimeout(toastTimeout);
+            textSpan.innerText = msg;
+            actionBtn.innerText = "OK";
+
+            // Toast entfernen nach Klick
+            actionBtn.onclick = (e) => {
+                e.stopPropagation();
+                toast.classList.remove('show');
+            };
+
+            actionBtn.style.display = 'block';
+            toast.classList.add('show');
         }
 
         async function forceUpdateApp() {
@@ -533,7 +546,25 @@
             location.reload(true);
         }
 
-        // --- 3. UI & THEME FUNKTIONEN ---
+        // --- 3. DEVELOPER MODUS ---
+        function devClick() {
+            var devMenu = document.getElementById('devMenu');
+
+            // Prüfen, ob der Modus bereits aktiv ist
+            if (devMenu.style.display === 'block') {
+                showToast("Entwickler-Modus bereits aktiviert");
+                return; // Funktion hier abbrechen
+            }
+
+            devClickCount++;
+            if (devClickCount >= 5) {
+                devMenu.style.display = 'block';
+                showToast("Entwickler-Modus aktiv");
+                devClickCount = 0;
+            }
+        }
+
+        // --- 4. UI & THEME FUNKTIONEN ---
         function setTheme(t) {
             localStorage.setItem('lohn_theme_bw', t);
             document.documentElement.setAttribute('data-theme', t);
@@ -566,7 +597,7 @@
             }
         }
 
-        // --- 4. BERECHNUNG & SPEICHERN ---
+        // --- 5. BERECHNUNG & SPEICHERN ---
         function calculate() {
             const weeks = parseFloat(document.getElementById('weeks').value) || 0;
             const hoursPerWeek = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
@@ -603,7 +634,7 @@
             const hoursVal = document.getElementById('hoursPerWeek').value;
             const wageVal = document.getElementById('hourlyWage').value;
 
-            // Umwandlung in echte Zahlen für die Prüfung
+            // Umwandlung in korrekte Zahlen für die Prüfung
             const weeks = parseFloat(weeksVal.replace(',', '.'));
             const hours = parseFloat(hoursVal.replace(',', '.'));
             const wage = parseFloat(wageVal.replace(',', '.'));
@@ -646,7 +677,7 @@
             if (document.getElementById('listView').style.display !== 'none') renderList();
         }
 
-        // --- 5. LISTEN-VERWALTUNG & PIN ---
+        // --- 6. LISTEN-VERWALTUNG & PIN ---
         function renderList() {
             const container = document.getElementById('savedList');
             container.innerHTML = '';
@@ -745,7 +776,7 @@
             renderList();
         }
 
-        // --- 6. IMPORT / EXPORT ---
+        // --- 7. IMPORT / EXPORT ---
         function exportLohnData() {
             const ts = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
             const blob = new Blob([JSON.stringify(savedCalculations)], { type: "application/json" });
@@ -774,8 +805,7 @@
             input.click();
         }
 
-        // --- 7. FEEDBACK & TOASTS ---
-        // Optimierte showToast, um den Update-Banner nicht zu schließen
+        // --- 8. FEEDBACK & TOASTS ---
         function showToast(message, actionText = null, actionFn = null) {
             const toast = document.getElementById('appToast');
             const textSpan = document.getElementById('toastText');
@@ -803,30 +833,10 @@
             toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
         }
 
-        function showUpdateBanner(msg) {
-            const toast = document.getElementById('appToast');
-            const textSpan = document.getElementById('toastText');
-            const actionBtn = document.getElementById('toastAction');
-
-            clearTimeout(toastTimeout);
-            textSpan.innerText = msg;
-            actionBtn.innerText = "OK";
-
-            // Sicherstellen, dass er wirklich verschwindet
-            actionBtn.onclick = (e) => {
-                e.stopPropagation();
-                toast.classList.remove('show');
-            };
-
-            actionBtn.style.display = 'block';
-            toast.classList.add('show');
-        }
-
         function deleteEntry(id) {
             const index = savedCalculations.findIndex(e => e.id === id);
             if (index === -1) return;
 
-            // Haptisches Feedback beim Löschen
             if (navigator.vibrate) navigator.vibrate(80);
 
             lastDeletedEntry = { data: savedCalculations[index], index: index };
@@ -846,7 +856,7 @@
             renderList();
         }
 
-        // --- 8. EINGABEFELDER ---
+        // --- 9. EINGABEFELDER ---
         // Verhindert Buchstaben-Eingabe (nur Zahlen, Punkt und Komma erlaubt)
         function isNumberKey(evt) {
             const charCode = (evt.which) ? evt.which : evt.keyCode;
@@ -866,7 +876,7 @@
             }
         }
 
-        // --- 9. SERVICE WORKER REGISTRIERUNG ---
+        // --- 10. SERVICE WORKER REGISTRIERUNG ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
             navigator.serviceWorker.addEventListener('controllerchange', () => {
