@@ -514,7 +514,7 @@
             border-radius: 6px;
             color: var(--text-color);
             font-family: 'Courier New', Courier, monospace;
-            font-size: 1.1em;
+            font-size: 1.3em;
             box-sizing: border-box;
         }
 
@@ -539,6 +539,7 @@
             box-shadow: 0 0 5px rgba(163, 190, 140, 0.5);
         }
 
+        /* 9. Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -601,6 +602,29 @@
             margin-bottom: 15px;
             border-bottom: 1px solid var(--input-border);
             padding-bottom: 10px;
+        }
+
+        /* Für Tablets und größere Bildschirme */
+        @media (min-width: 600px) {
+            :root {
+                --app-max-width: 650px;
+                /* Erhöht die Breite auf Tablets */
+            }
+
+            .container {
+                padding: 30px;
+                /* Etwas mehr Innenabstand für den "Premium-Look" */
+            }
+
+            /* Optional: Die Ergebnis-Boxen nebeneinander statt untereinander */
+            .result-row {
+                display: flex;
+                gap: 15px;
+            }
+
+            .result-row>div {
+                flex: 1;
+            }
         }
     </style>
 </head>
@@ -718,6 +742,10 @@
             <div id="changelogBody" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.4;">
             </div>
         </div>
+    </div>
+
+    <div id="toast-overlay" onclick="hideToast()"
+        style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 999; display: none;">
     </div>
 
     <script>
@@ -1379,6 +1407,7 @@
         function showToast(message, actionText = null, actionFn = null, secondaryText = null, secondaryFn = null) {
             const toast = document.getElementById('appToast');
             const textSpan = document.getElementById('toastText');
+            const overlay = document.getElementById('toast-overlay');
 
             // Container & Progressbar suchen/erstellen
             let btnContainer = toast.querySelector('.toast-button-container');
@@ -1399,6 +1428,8 @@
 
             clearTimeout(toastTimeout);
 
+            if (overlay) overlay.style.display = 'none';
+
             // HTML oder Text setzen
             if (message.includes('<span') || message.includes('<div')) textSpan.innerHTML = message;
             else textSpan.innerText = message;
@@ -1412,11 +1443,20 @@
 
             // Buttons bauen
             if (actionText) {
+
+                if (overlay) overlay.style.display = 'block';
+
                 btnContainer.classList.add('is-persistent');
                 const b1 = document.createElement('button');
                 b1.className = 'toast-btn';
                 b1.innerText = actionText;
-                b1.onclick = (e) => { e.stopPropagation(); if (actionFn) actionFn(); toast.classList.remove('show'); };
+
+                b1.onclick = (e) => {
+                    e.stopPropagation();
+                    if (actionFn) actionFn();
+                    hideToast(); // Nutzt jetzt hideToast für sauberes Aufräumen
+                };
+
                 btnContainer.appendChild(b1);
 
                 if (secondaryText) {
@@ -1426,7 +1466,13 @@
                     b2.style.color = '#ff4444';
                     b2.style.background = 'rgba(255, 68, 68, 0.1)';
                     b2.innerText = secondaryText;
-                    b2.onclick = (e) => { e.stopPropagation(); if (secondaryFn) secondaryFn(); toast.classList.remove('show'); };
+
+                    b2.onclick = (e) => {
+                        e.stopPropagation();
+                        if (secondaryFn) secondaryFn();
+                        hideToast(); // Nutzt jetzt hideToast
+                    };
+
                     btnContainer.appendChild(b2);
                 }
             }
@@ -1442,8 +1488,18 @@
                     progressBar.style.transition = `transform ${duration}ms linear`;
                     progressBar.style.transform = 'scaleX(0)';
                 }, 10);
-                toastTimeout = setTimeout(() => toast.classList.remove('show'), duration);
+                toastTimeout = setTimeout(() => hideToast(), duration); // Nutzt hideToast
             }
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('appToast');
+            const overlay = document.getElementById('toast-overlay');
+
+            if (toast) toast.classList.remove('show');
+            if (overlay) overlay.style.display = 'none';
+
+            clearTimeout(toastTimeout); // Timer stoppen, falls manuell geschlossen wurde
         }
 
         function deleteEntry(id) {
