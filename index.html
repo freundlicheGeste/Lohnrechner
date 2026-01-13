@@ -485,22 +485,23 @@
         /* Kompakte Buttons nur im Entwickler-Menü */
         #devMenu .toast-btn {
             flex: none;
-            /* Verhindert das Aufblähen */
             width: 100%;
-            /* Nutzt die volle Breite des Containers */
-            padding: 8px;
-            /* Reduziertes Padding für weniger Höhe */
-            font-size: 1em;
+            padding: 10px;
+            /* Etwas mehr Klickfläche */
+            font-size: 0.95em;
             /* Etwas kleinere Schrift als im Toast */
             min-width: 0;
             /* Hebt die globale min-width auf */
             max-width: 100%;
+            margin: 0;
+            /* Reset für sauberes Gap-Handling */
         }
 
         .dev-console-wrapper {
             position: relative;
             width: 100%;
-            margin-top: 10px;
+            margin-bottom: 5px;
+            /* Kleiner Abstand zu den Buttons darunter */
         }
 
         .dev-console-input {
@@ -527,7 +528,7 @@
             display: inline-block;
             cursor: default;
             user-select: none;
-            text-shadow: 0 0 5px rgba(0,0,0,0.3);
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
         }
 
         /* Wenn entsperrt, leuchtet die Konsole leicht */
@@ -556,11 +557,39 @@
             color: var(--text-color);
             padding: 20px;
             border-radius: 12px;
-            max-width: 500px;
-            width: 100%;
+            /* FIX: Verhindert das Herausragen am Handy */
+            width: 90%;
+            max-width: 450px;
+            box-sizing: border-box;
+            /* Wichtig: Padding wird in die Breite eingerechnet */
+
             max-height: 80vh;
             overflow-y: auto;
             border: 1px solid var(--accent-color);
+            position: relative;
+            /* Für die Positionierung des X */
+        }
+
+        /* FIX für den Text-Inhalt (JSON/Logs) */
+        #changelogBody {
+            white-space: pre-wrap;
+            word-break: break-all;
+            /* Erzwingt Umbruch auch bei langen JSON-Strings */
+            font-size: 0.85em;
+            line-height: 1.4;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Das X besser klickbar machen */
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--accent-color);
+            z-index: 10;
         }
 
         .modal-header {
@@ -568,12 +597,6 @@
             margin-bottom: 15px;
             border-bottom: 1px solid var(--input-border);
             padding-bottom: 10px;
-        }
-
-        .close-modal {
-            float: right;
-            cursor: pointer;
-            font-size: 1.5em;
         }
     </style>
 </head>
@@ -660,14 +683,17 @@
             <div class="info-footer">
                 Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
                 <div id="devMenu"
-                    style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 8px; flex-direction: column; gap: 8px; align-items: center;">
-                    <button onclick="showLastChangelog()" class="toast-btn" tabindex="-1">📋 Changelog</button>
-                    <button onclick="forceUpdateApp()" class="toast-btn" tabindex="-1">🔄 Reset Cache</button>
+                    style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 8px; flex-direction: column; gap: 12px; align-items: center;">
 
                     <div class="dev-console-wrapper">
                         <span id="consoleIcon" class="console-icon">🔒</span>
-                        <input type="text" id="devConsole" class="dev-console-input" placeholder="Konsole gesperrt..."
+                        <input type="password" id="devConsole" class="dev-console-input" placeholder="Code eingeben..."
                             tabindex="-1" onkeydown="handleConsole(event)">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                        <button onclick="showLastChangelog()" class="toast-btn" tabindex="-1">📋 Changelog</button>
+                        <button onclick="forceUpdateApp()" class="toast-btn" tabindex="-1">🔄 Reset Cache</button>
                     </div>
                 </div>
             </div>
@@ -692,7 +718,7 @@
 
     <script>
         // --- 1. GLOBALE VARIABLEN & DATEN ---
-        const APP_VERSION = "v1.0.6";
+        const APP_VERSION = "v1.0.7";
         const CHANGELOG = {
             "v1.0.6": "Fixes, DEV Konsole, Unselect Button, Listenansicht für Tastatureingaben (Tab, Enter) blockiert",
             "v1.0.5": "Neue Toast-Logik mit Undo & Progress-Bar",
@@ -777,7 +803,43 @@
         }
 
         // --- 3. DEVELOPER MODUS ---
+        let isConsoleUnlocked = false;
+        //const DEV_PW = "1234"; // Master-Passwort zum Entsperren
+
+        // 1. Zugriff ohne Passwort (für Shortcut & 5x Tippen)
+        function openDevMenu() {
+            const devMenu = document.getElementById('devMenu');
+            if (devMenu) {
+                // Prüfen, ob es schon offen ist
+                if (devMenu.style.display === 'flex') {
+                    showToast("Entwickler-Modus bereits aktiv");
+                    return;
+                }
+
+                devMenu.style.display = 'flex';
+                // Konsole in den Sperrzustand versetzen
+                lockConsole();
+
+                showToast("Entwickler-Modus aktiviert");
+
+                // Auto-Fokus auf die Konsole nach dem Öffnen
+                setTimeout(() => {
+                    document.getElementById('devConsole').focus();
+                }, 300);
+            }
+        }
+
+        // 2. Klick-Zähler mit Status-Prüfung
         function devClick() {
+            const devMenu = document.getElementById('devMenu');
+
+            // Wenn das Menü schon sichtbar ist, Zähler ignorieren
+            if (devMenu && devMenu.style.display === 'flex') {
+                showToast("Entwickler-Modus bereits aktiv");
+                devClickCount = 0;
+                return;
+            }
+
             devClickCount++;
             if (devClickCount >= 5) {
                 openDevMenu();
@@ -785,29 +847,45 @@
             }
         }
 
-        let isConsoleUnlocked = false;
-        const DEV_PW = "1234"; // Master-Passwort zum Entsperren
-
-        // 1. Zugriff ohne Passwort (für Shortcut & 5x Tippen)
-        function openDevMenu() {
-            const devMenu = document.getElementById('devMenu');
-            if (devMenu) {
-                devMenu.style.display = 'flex';
-                showToast("Entwickler-Modus aktiv");
-            }
+        // 3. Die Konsolen-Logik
+        // Hilfsfunktion zum Erstellen eines SHA-256 Hashes
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        // 2. Die Konsolen-Logik
-        function handleConsole(event) {
+        // Der gespeicherte Hash für "1234"
+        const DEV_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
+        function lockConsole() {
+            const input = document.getElementById('devConsole');
+            isConsoleUnlocked = false;
+            if (input) {
+                input.type = "password";
+                input.placeholder = "Code eingeben...";
+                input.value = "";
+                input.classList.remove('unlocked');
+            }
+            document.getElementById('consoleIcon').innerText = "🔒";
+        }
+
+        async function handleConsole(event) {
             if (event.key === 'Enter') {
                 const input = event.target;
-                const cmd = input.value.trim().toLowerCase();
+                const val = input.value.trim();
+                const cmd = val.toLowerCase();
 
                 if (!isConsoleUnlocked) {
                     // Logik zum Entsperren
-                    if (cmd === DEV_PW) {
+                    // Wir hashen die Eingabe und vergleichen sie mit dem DEV_HASH
+                    const inputHash = await sha256(val);
+
+                    if (inputHash === DEV_HASH) {
                         isConsoleUnlocked = true;
                         document.getElementById('consoleIcon').innerText = "🔓";
+                        input.type = "text"; // Zurück auf Text für Befehle
                         input.placeholder = "Befehl eingeben...";
                         input.value = "";
                         input.classList.add('unlocked');
@@ -820,10 +898,12 @@
                     // Logik für Befehle (wenn entsperrt)
                     executeCommand(cmd);
                     input.value = ""; // Feld leeren nach Befehl
+                    input.focus(); // focus nach Befehl
                 }
             }
         }
 
+        // 4. Die Konsolen-Befehle
         function executeCommand(cmd) {
             switch (cmd) {
                 case 'nord':
@@ -841,84 +921,89 @@
                     location.reload();
                     break;
                 case 'info':
-            // Wir holen uns die Version direkt aus dem Header-Element (V1.0.6...)
-            const versionText = document.querySelector('header p') ? document.querySelector('header p').innerText : "Unbekannt";
-            const anzahlEinträge = savedCalculations.length;
-            const theme = localStorage.getItem('lohn_theme_bw') || 'light';
-            
-            const infoMessage = `Version: ${versionText} | Einträge: ${anzahlEinträge} | Theme: ${theme}`;
-            
-            console.log(infoMessage); // Zur Sicherheit auch in die F12 Konsole
-            showToast(infoMessage);
-            break;
+                    // Holt Version aus dem Header-Element (V1.0.6...)
+                    const versionText = document.getElementById('versionDisplay') ? document.getElementById('versionDisplay').innerText : APP_VERSION;
+                    const anzahl = savedCalculations.length;
+                    const theme = localStorage.getItem('lohn_theme_bw') || 'light';
+                    showToast(`Version: ${versionText}\nEinträge: ${anzahl}\nTheme: ${theme}`);
+                    break;
                 case 'test':
-                    // Generiert 3 Test-Einträge
+                    // Generiert Test-Einträge im exakten App-Format
                     const testData = [
-                        { id: Date.now(), name: "Test Junior", brutto: 3200, netto: 2150, date: new Date().toLocaleDateString() },
-                        { id: Date.now() + 1, name: "Test Senior", brutto: 5500, netto: 3420, date: new Date().toLocaleDateString() },
-                        { id: Date.now() + 2, name: "Test Chef", brutto: 8500, netto: 5100, date: new Date().toLocaleDateString(), pinned: true }
+                        {
+                            id: Date.now(),
+                            wage: "25,00 €/Std.",
+                            rawWage: 25.0,
+                            netto: "2.850,00 €",
+                            brutto: "4.333,33 €",
+                            hours: "40 Std./Wo.",
+                            rawHours: 40,
+                            weeks: "52 Wo./Jahr",
+                            rawWeeks: 52,
+                            pinned: false
+                        },
+                        {
+                            id: Date.now() + 1,
+                            wage: "19,38 €/Std.",
+                            rawWage: 19.38,
+                            netto: "1.202,01 €",
+                            brutto: "1.574,63 €",
+                            hours: "37,5 Std./Wo.",
+                            rawHours: 37.5,
+                            weeks: "26 Wo./Jahr",
+                            rawWeeks: 26,
+                            pinned: true
+                        }
                     ];
-                    savedCalculations.push(...testData);
-                    localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-                    renderList();
-                    showToast("3 Testdatensätze erstellt 🧪");
+                    handleImportLogic(testData); // Nutzt deine bestehende Logik (Add/Replace)
                     break;
                 case 'logs':
-                    // Zeigt das große Changelog
-                    const fullLogs = `
-v1.0.6: Dev-Konsole & Nord-Theme Easter Egg
-v1.0.5: Shortcut-Support & PIN-Schutz
-v1.0.4: Listenansicht & Vergleichsmodus
-v1.0.0: Initialer Release (Grundrechner)`;
-                    document.getElementById('changelogBody').innerText = fullLogs;
+                    // Zeigt das große Changelog im Modal
+                    let logText = "";
+                    for (const [ver, info] of Object.entries(CHANGELOG)) {
+                        logText += `--- ${ver} ---\n${info}\n\n`;
+                    }
+                    document.getElementById('changelogBody').innerText = logText;
                     document.getElementById('changelogModal').style.display = 'flex';
                     break;
                 case 'cls':
-                    // Konsole optisch leeren (einfach nur ein kleiner Trick)
                     showToast("Konsole bereit.");
                     break;
                 case 'export':
                     if (savedCalculations.length === 0) {
                         showToast("Keine Daten zum Exportieren vorhanden.");
                     } else {
-                        // Erstellt einen formatierten JSON-String
                         const exportData = JSON.stringify(savedCalculations, null, 4);
-
-                        // Wir nutzen das vorhandene Modal für die Ausgabe
+                        // Ausgabe im Modal
                         document.getElementById('changelogBody').innerText = exportData;
                         document.getElementById('changelogModal').style.display = 'flex';
 
-                        // Bonus: Direkt in die Zwischenablage kopieren
-                        navigator.clipboard.writeText(exportData).then(() => {
-                            showToast("JSON in Zwischenablage kopiert! 📋");
-                        });
-                    }
-                    break;
-                case 'import':
-                    const inputData = prompt("JSON-Daten hier einfügen:");
-                    if (inputData) {
-                        try {
-                            const parsed = JSON.parse(inputData);
-                            if (Array.isArray(parsed)) {
-                                savedCalculations = parsed;
-                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-                                renderList();
-                                showToast("Import erfolgreich! ✅");
-                            }
-                        } catch (e) {
-                            showToast("Fehler: Ungültiges Format!");
+                        // In Zwischenablage kopieren (mit Fallback)
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(exportData).then(() => {
+                                showToast("JSON kopiert! 📋");
+                            });
+                        } else {
+                            showToast("JSON bereit - bitte manuell kopieren");
                         }
                     }
                     break;
-                    case 'help':
-            showToast("Befehle: help, info, logs, test, export, import, nord, dark, light, lock, cls");
-            break;
+                case 'import':
+                    const rawJson = prompt("JSON-Daten hier einfügen:");
+                    if (rawJson) {
+                        try {
+                            const parsed = JSON.parse(rawJson);
+                            handleImportLogic(parsed);
+                        } catch (e) {
+                            showToast("Fehler: Ungültiges JSON!");
+                        }
+                    }
+                    break;
+                case 'help':
+                    showToast("Befehle:\nhelp, info, logs, test, export, import, nord, dark, light, lock, cls");
+                    break;
                 case 'lock':
-                    // Konsole wieder sperren
-                    isConsoleUnlocked = false;
-                    document.getElementById('consoleIcon').innerText = "🔒";
-                    document.getElementById('devConsole').placeholder = "Konsole gesperrt...";
-                    document.getElementById('devConsole').classList.remove('unlocked');
+                    lockConsole();
                     showToast("Konsole gesperrt");
                     break;
                 default:
@@ -1193,7 +1278,6 @@ v1.0.0: Initialer Release (Grundrechner)`;
         function deselectAll() {
             selectedIds = [];
             renderList();
-            showToast("Auswahl aufgehoben");
         }
 
         // --- 7. IMPORT / EXPORT ---
@@ -1221,42 +1305,48 @@ v1.0.0: Initialer Release (Grundrechner)`;
                 reader.onload = ev => {
                     try {
                         const imported = JSON.parse(ev.target.result);
-                        if (!Array.isArray(imported)) return showToast("Ungültiges Format!");
-
-                        const totalImported = imported.length;
-                        const existingIds = new Set(savedCalculations.map(c => c.id));
-                        const uniqueNew = imported.filter(c => !existingIds.has(c.id));
-                        const skipped = totalImported - uniqueNew.length;
-
-                        // LOGIK-FIX: Wenn alles schon da ist
-                        if (uniqueNew.length === 0 && totalImported > 0) {
-                            showToast(`Alle ${totalImported} Einträge bereits vorhanden.`);
-                            return;
-                        }
-
-                        // Ansonsten: Fragen
-                        showToast(
-                            `Import: ${totalImported} Einträge gefunden.\n(${skipped} bereits vorhanden)`,
-                            "Hinzufügen",
-                            () => {
-                                savedCalculations = [...savedCalculations, ...uniqueNew];
-                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-                                renderList();
-                                showToast(`${uniqueNew.length} neu importiert, ${skipped} übersprungen`);
-                            },
-                            "Ersetzen",
-                            () => {
-                                savedCalculations = imported;
-                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
-                                renderList();
-                                showToast("Liste komplett ersetzt");
-                            }
-                        );
-                    } catch (err) { showToast("Fehler beim Import!"); }
+                        handleImportLogic(imported); // Aufruf der zentralen Logik
+                    } catch (err) { showToast("Ungültiges JSON-Format!"); }
                 };
                 reader.readAsText(e.target.files[0]);
             };
             input.click();
+        }
+
+        function handleImportLogic(imported) {
+            try {
+                if (!Array.isArray(imported)) return showToast("Ungültiges Format!");
+
+                const totalImported = imported.length;
+                const existingIds = new Set(savedCalculations.map(c => c.id));
+                const uniqueNew = imported.filter(c => !existingIds.has(c.id));
+                const skipped = totalImported - uniqueNew.length;
+
+                if (uniqueNew.length === 0 && totalImported > 0) {
+                    showToast(`Alle ${totalImported} Einträge bereits vorhanden.`);
+                    return;
+                }
+
+                showToast(
+                    `Import: ${totalImported} Einträge gefunden.\n(${skipped} bereits vorhanden)`,
+                    "Hinzufügen",
+                    () => {
+                        savedCalculations = [...savedCalculations, ...uniqueNew];
+                        localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                        renderList();
+                        showToast(`${uniqueNew.length} neu importiert, ${skipped} übersprungen`);
+                    },
+                    "Ersetzen",
+                    () => {
+                        savedCalculations = imported;
+                        localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                        renderList();
+                        showToast("Liste komplett ersetzt");
+                    }
+                );
+            } catch (err) {
+                showToast("Fehler bei der Verarbeitung!");
+            }
         }
 
         // --- 8. FEEDBACK & TOASTS ---
