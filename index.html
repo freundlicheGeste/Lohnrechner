@@ -527,6 +527,7 @@
             display: inline-block;
             cursor: default;
             user-select: none;
+            text-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
 
         /* Wenn entsperrt, leuchtet die Konsole leicht */
@@ -840,8 +841,16 @@
                     location.reload();
                     break;
                 case 'info':
-                    showToast("V" + currentVersion + " | " + savedCalculations.length + " Einträge");
-                    break;
+            // Wir holen uns die Version direkt aus dem Header-Element (V1.0.6...)
+            const versionText = document.querySelector('header p') ? document.querySelector('header p').innerText : "Unbekannt";
+            const anzahlEinträge = savedCalculations.length;
+            const theme = localStorage.getItem('lohn_theme_bw') || 'light';
+            
+            const infoMessage = `Version: ${versionText} | Einträge: ${anzahlEinträge} | Theme: ${theme}`;
+            
+            console.log(infoMessage); // Zur Sicherheit auch in die F12 Konsole
+            showToast(infoMessage);
+            break;
                 case 'test':
                     // Generiert 3 Test-Einträge
                     const testData = [
@@ -901,6 +910,9 @@ v1.0.0: Initialer Release (Grundrechner)`;
                         }
                     }
                     break;
+                    case 'help':
+            showToast("Befehle: help, info, logs, test, export, import, nord, dark, light, lock, cls");
+            break;
                 case 'lock':
                     // Konsole wieder sperren
                     isConsoleUnlocked = false;
