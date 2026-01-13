@@ -1178,6 +1178,8 @@
             const banner = document.createElement('div');
             banner.id = "compareBanner";
             banner.className = "compare-banner";
+            banner.onclick = deselectAll;
+            banner.style.cursor = "pointer";
             container.appendChild(banner);
 
             if (savedCalculations.length === 0) {
