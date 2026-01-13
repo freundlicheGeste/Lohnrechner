@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#ff8c00">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lohn- & Netto-Rechner BW</title>
+    <style>
+        /* 1. Grund-Variablen & Themes */
+        :root {
+            --bg-color: #f4f4f9;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --input-border: #cccccc;
+            --result-bg: #fff5e6;
+            --netto-bg: #e1f5fe;
+            --accent-color: #ff8c00;
+            --blue-accent: #0288d1;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #f4f4f4;
+            --input-border: #444444;
+            --result-bg: #2d1f10;
+            --netto-bg: #0d1a2b;
+            --accent-color: #ffa500;
+        }
+
+        /* Easter Egg: Nord Theme */
+        [data-theme="nord"] {
+            --bg-color: #2e3440;
+            --container-bg: #3b4252;
+            --text-color: #eceff4;
+            --input-border: #4c566a;
+            --result-bg: #434c5e;
+            --netto-bg: #2e3440;
+            /* Etwas dunkler für besseren Kontrast */
+            --accent-color: #88c0d0;
+            /* Frost Blue */
+            --blue-accent: #a3be8c;
+            /* NEU: Nord Aurora Green für den Netto-Wert */
+        }
+
+        /* Spezielle Anpassung für Textfarben im Nord-Theme */
+        [data-theme="nord"] .netto-value,
+        [data-theme="nord"] .res-value {
+            color: #a3be8c !important;
+            /* Aurora Green ist sehr gut lesbar */
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="nord"] .brutto-card .res-value {
+            color: #88c0d0 !important;
+            /* Frost Blue für Brutto */
+        }
+
+        [data-theme="nord"] .save-data-right {
+            color: #a3be8c !important;
+        }
+
+        [data-theme="nord"] .btn-deselect {
+            color: #bf616a !important;
+            /* Nord Red */
+            border-color: #bf616a !important;
+        }
+
+        /* Globale Deaktiverung des blauen Standardfokus-Rahmens des Browser */
+        *:focus {
+            outline: none !important;
+        }
+
+        /* 2. Layout & Basis-Elemente */
+        body {
+            font-family: sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px 8px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            overscroll-behavior-y: contain;
+            /* Runterziehen zum neu laden blocken */
+        }
+
+        .container {
+            background: var(--container-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 99%;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* 3. Eingabe-Elemente */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: var(--container-bg);
+            color: var(--text-color);
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus {
+            border: 2px solid var(--accent-color);
+            background-color: var(--result-bg);
+        }
+
+        /* Pfeile in Chrome/Safari/Firefox entfernen */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* 4. Buttons & Interaktion */
+        .small-btn {
+            cursor: pointer;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            background: var(--result-bg);
+            color: var(--text-color);
+            font-size: 1.1em;
+            outline: none;
+            transition: transform 0.1s active;
+        }
+
+        .small-btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-success {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            transition: background-color 0.3s;
+        }
+
+        /* 5. Ergebniskarten & Details */
+        .result-card {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid transparent;
+        }
+
+        .brutto-card {
+            background: var(--result-bg);
+            border-color: var(--accent-color);
+        }
+
+        .netto-card {
+            background: var(--netto-bg);
+            border-color: var(--blue-accent);
+            margin-top: 10px;
+        }
+
+        .res-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-bottom: 3px;
+        }
+
+        .res-value {
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .brutto-card .res-value {
+            color: var(--accent-color);
+        }
+
+        .netto-value {
+            color: var(--blue-accent);
+            font-size: 2.2em;
+        }
+
+        .details {
+            margin-top: 15px;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 4px 0;
+        }
+
+        .section-title {
+            margin: 20px 0 10px 0;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--input-border);
+            padding-bottom: 5px;
+        }
+
+        /* 6. Listenansicht & Speicher-Karten */
+        .save-card {
+            background: var(--container-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .save-card.selected {
+            border: 2px solid var(--accent-color);
+            background: var(--result-bg);
+        }
+
+        .save-card.pinned {
+            border-left: 5px solid var(--blue-accent);
+            background: var(--netto-bg);
+        }
+
+        .save-data-left {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--text-color);
+        }
+
+        .save-data-right {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--blue-accent);
+            text-align: right;
+        }
+
+        .save-label-small {
+            font-size: 0.75em;
+            opacity: 0.7;
+            display: block;
+            font-weight: normal;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding-left: 10px;
+        }
+
+        .btn-deselect {
+            color: #ff4444 !important;
+            border-color: rgba(255, 68, 68, 0.3) !important;
+            background: rgba(255, 68, 68, 0.05) !important;
+        }
+
+        .list-footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid var(--input-border);
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .list-footer .small-btn {
+            width: auto;
+            height: auto;
+            padding: 10px 15px;
+            background: var(--container-bg);
+            min-width: 100px;
+        }
+
+        .compare-banner {
+            background: var(--result-bg);
+            color: var(--text-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--accent-color);
+        }
+
+        .compare-title {
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+            font-size: 0.8em;
+        }
+
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .compare-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px dashed var(--input-border);
+        }
+
+        .mirror-icon {
+            display: inline-block;
+            transform: scaleX(-1);
+        }
+
+        /* 7. Toasts & Feedback */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(550px);
+            background: var(--container-bg);
+            color: var(--text-color);
+            padding: 16px 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            /* Für mehrzeilige Update-Infos */
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--accent-color);
+            z-index: 2000;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.95em;
+            width: 90%;
+            /* Handy-optimiert */
+            max-width: 380px;
+            /* Begrenzung für Desktop */
+            box-sizing: border-box;
+            white-space: pre-line;
+            /* Erlaubt Zeilenumbrüche \n */
+            text-align: center;
+            justify-content: center;
+            /* Zentriert Text vertikal */
+            overflow: hidden;
+            /* Progressbar Begrenzung */
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Styling für den Titel im Update Toast */
+        .toast-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            display: block;
+            width: 100%;
+            color: var(--accent-color);
+            margin-top: -10px;
+            margin-bottom: 0;
+        }
+
+        /* Die Trennlinie im Update Toast */
+        .toast-divider {
+            border: 0;
+            border-top: 1px solid var(--input-border);
+            width: 100%;
+            margin: 0;
+            opacity: 0.5;
+        }
+
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Versteckt den Container komplett, wenn keine Buttons drin sind */
+        .toast-button-container:empty {
+            display: none;
+        }
+
+        .toast-button-container {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+            /* Erlaubt den Zeilenumbruch, wenn der Platz nicht reicht (zb Buttons)*/
+            margin-top: 5px;
+            /* Abstand zum Text nur wenn Buttons da sind */
+        }
+
+        .toast-btn {
+            color: var(--accent-color);
+            background: var(--result-bg);
+            border: 1px solid var(--accent-color);
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            text-transform: uppercase;
+            padding: 12px 15px;
+            flex: 1;
+            /*  */
+            width: 80%;
+            /* Buttonbreite im Toast */
+            flex: 1 1 140px;
+            max-width: 80%;
+            /* Ein einzelner Button wird nie breiter als 80% */
+            min-width: 120px;
+            /* Verhindert, dass Buttons zu schmal werden */
+        }
+
+        /* Der Fortschrittsbalken */
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: var(--accent-color);
+            width: 100%;
+            transform-origin: left;
+            transition: transform linear;
+            display: none;
+        }
+
+        .info-footer {
+            font-size: 0.7em;
+            margin-top: 15px;
+            font-style: italic;
+            opacity: 0.7;
+            text-align: center;
+        }
+
+        /* 8. Developer Konsole */
+        /* Kompakte Buttons nur im Entwickler-Menü */
+        #devMenu .toast-btn {
+            flex: none;
+            width: 100%;
+            padding: 10px;
+            /* Etwas mehr Klickfläche */
+            font-size: 0.95em;
+            /* Etwas kleinere Schrift als im Toast */
+            min-width: 0;
+            /* Hebt die globale min-width auf */
+            max-width: 100%;
+            margin: 0;
+            /* Reset für sauberes Gap-Handling */
+        }
+
+        .dev-console-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 5px;
+            /* Kleiner Abstand zu den Buttons darunter */
+        }
+
+        .dev-console-input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            /* Platz links für das Icon */
+            background: var(--netto-bg);
+            border: 1px solid var(--accent-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            box-sizing: border-box;
+        }
+
+        .console-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.8em;
+            font-style: normal !important;
+            font-family: Arial, sans-serif !important;
+            display: inline-block;
+            cursor: default;
+            user-select: none;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Wenn entsperrt, leuchtet die Konsole leicht */
+        .dev-console-input.unlocked {
+            border-color: #a3be8c;
+            /* Nord Grün oder einfach hellgrün */
+            box-shadow: 0 0 5px rgba(163, 190, 140, 0.5);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--container-bg);
+            color: var(--text-color);
+            padding: 20px;
+            border-radius: 12px;
+            /* FIX: Verhindert das Herausragen am Handy */
+            width: 90%;
+            max-width: 450px;
+            box-sizing: border-box;
+            /* Wichtig: Padding wird in die Breite eingerechnet */
+
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--accent-color);
+            position: relative;
+            /* Für die Positionierung des X */
+        }
+
+        /* FIX für den Text-Inhalt (JSON/Logs) */
+        #changelogBody {
+            white-space: pre-wrap;
+            word-break: break-all;
+            /* Erzwingt Umbruch auch bei langen JSON-Strings */
+            font-size: 0.85em;
+            line-height: 1.4;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Das X besser klickbar machen */
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--accent-color);
+            z-index: 10;
+        }
+
+        .modal-header {
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--input-border);
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div
+        style="max-width: 400px; width: 99%; display: flex; justify-content: flex-end; margin-bottom: 5px; margin-right: 5px;">
+        <span id="versionDisplay" onclick="devClick()"
+            style="font-size: 0.75em; color: #888; font-family: sans-serif; cursor: pointer;"></span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h2 style="margin:0;" id="mainTitle">Lohnrechner</h2>
+            <div style="display: flex; gap: 8px;">
+                <button id="saveBtn" class="small-btn" onclick="saveCalculation()" title="Speichern">💾</button>
+                <button id="pinBtn" class="small-btn" style="display: none;" onclick="pinSelected()"
+                    title="Pinnen">📌</button>
+                <button id="deselectBtn" class="small-btn btn-deselect" style="display: none;" onclick="deselectAll()"
+                    title="Auswahl aufheben">
+                    <span style="font-size: 1.5em; line-height: 1;">&times;</span>
+                </button>
+                <button class="small-btn" onclick="toggleView()" id="viewBtn" title="Ansicht">📊</button>
+                <button class="small-btn" onclick="toggleTheme()" title="Theme">🌓</button>
+            </div>
+        </div>
+
+        <div id="listView" style="display: none;">
+            <div class="section-title" style="display: flex; justify-content: space-between; align-items: baseline;">
+                <span>Berechnungen</span>
+            </div>
+            <p id="listHint"
+                style="font-size: 0.75em; font-style: italic; opacity: 0.7; text-align: center; margin-top: -2px;">
+                Tippe zwei Einträge an zum Vergleichen
+            </p>
+            <div id="savedList"></div>
+            <div class="list-footer">
+                <button class="small-btn" onclick="exportLohnData()" title="Export">📤 Export</button>
+                <button class="small-btn" onclick="importLohnData()" title="Import">📥 Import</button>
+            </div>
+        </div>
+
+        <div id="calculatorView">
+            <div class="input-group">
+                <label>Arbeitswochen / Jahr:</label>
+                <input type="number" id="weeks" value="52" step="1" onkeypress="return isNumberKey(event)"
+                    onpaste="validatePaste(event)" oninput="calculate()" onfocus="this.select()">
+            </div>
+            <div class="input-group">
+                <label>Wochenstunden:</label>
+                <input lang="en-150" type="number" id="hoursPerWeek" value="37.5" step="0.5"
+                    onkeypress="return isNumberKey(event)" onpaste="validatePaste(event)" oninput="calculate()"
+                    onfocus="this.select()">
+            </div>
+            <div class="input-group">
+                <label>Stundenlohn (€):</label>
+                <input lang="en-150" type="number" id="hourlyWage" value="18.50" step="0.10"
+                    onkeypress="return isNumberKey(event)" onpaste="validatePaste(event)" oninput="calculate()"
+                    onfocus="this.select()"
+                    onkeydown="if (e.key === 'Enter' || e.key === 'Tab') { event.preventDefault(); this.blur(); }"
+                    onblur="this.value = parseFloat(this.value).toFixed(2)">
+            </div>
+
+            <div class="result-card brutto-card">
+                <div class="res-label">Monatliches Brutto</div>
+                <div class="res-value" id="monthlyBrutto">0,00 €</div>
+            </div>
+
+            <div class="result-card netto-card">
+                <div class="res-label">Netto (Steuerklasse 4, BW)</div>
+                <div class="netto-value" id="monthlyNetto">0,00 €</div>
+            </div>
+
+            <div class="details">
+                <div class="section-title">Details Abzüge</div>
+                <div class="info-row"><span>Krankenv. (8,1% + 1,1% Zusatz):</span><span id="kv">0 €</span></div>
+                <div class="info-row"><span>Rentenvers. (9,3%):</span><span id="rv">0 €</span></div>
+                <div class="info-row"><span>Pflegevers. (2,3%):</span><span id="pv">0 €</span></div>
+                <div class="info-row"><span>Arbeitslosenv. (1,3%):</span><span id="av">0 €</span></div>
+                <div class="info-row"><span>Lohnsteuer (Stkl. 4):</span><span id="lst">0 €</span></div>
+            </div>
+
+            <div class="info-footer">
+                Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
+                <div id="devMenu"
+                    style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 8px; flex-direction: column; gap: 12px; align-items: center;">
+
+                    <div class="dev-console-wrapper">
+                        <span id="consoleIcon" class="console-icon">🔒</span>
+                        <input type="password" id="devConsole" class="dev-console-input" placeholder="Code eingeben..."
+                            tabindex="-1" onkeydown="handleConsole(event)">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                        <button onclick="showLastChangelog()" class="toast-btn" tabindex="-1">📋 Changelog</button>
+                        <button onclick="forceUpdateApp()" class="toast-btn" tabindex="-1">🔄 Reset Cache</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="appToast" class="toast">
+        <span id="toastText"></span>
+    </div>
+
+    <div id="changelogModal" class="modal-overlay" onclick="this.style.display='none'">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="close-modal"
+                    onclick="document.getElementById('changelogModal').style.display='none'">&times;</span>
+                📜 Komplette Versionshistorie
+            </div>
+            <div id="changelogBody" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.4;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. GLOBALE VARIABLEN & DATEN ---
+        const APP_VERSION = "v1.0.7";
+        const CHANGELOG = {
+            "v1.0.6": "Fixes, DEV Konsole, Unselect Button, Listenansicht für Tastatureingaben (Tab, Enter) blockiert",
+            "v1.0.5": "Neue Toast-Logik mit Undo & Progress-Bar",
+            "v1.0.4": "- Inputbox lang=en, bei Lohn 2stellig nach Komma\n- Dev Klick Optimierung\n- Pin Icon für Listeneintrag entfernt",
+            "v1.0.3": "Fix: Inputfelder (nur Zahlen), Pin Icon + Vergleichselement",
+            "v1.0.2": "Alerts wurde durch Toasts ersetzt. Haptisches Feedback & Geheim-Menü für Updates.",
+            "v1.0.1": "Export-Dateiname mit Zeitstempel, verbesserte Datensicherheit beim Import.",
+            "v1.0.0": "Optimierung der Berechnung für das Steuerjahr 2026."
+        };
+
+        let savedCalculations = JSON.parse(localStorage.getItem('lohn_saved')) || [];
+        let selectedIds = [];
+        let lastDeletedEntry = null;
+        let toastTimeout = null;
+        let devClickCount = 0;
+
+        // --- 2. INITIALISIERUNG & UPDATE-LOGIK ---
+        window.onload = function () {
+            calculate();
+            checkUpdate();
+
+            // Bestehendes Theme laden
+            const savedTheme = localStorage.getItem('lohn_theme_bw');
+            if (savedTheme) setTheme(savedTheme);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+
+            if (mode === 'list') {
+                toggleView();
+            } else if (mode === 'dev') {
+                openDevMenu();
+            }
+
+            if (mode) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        };
+
+        function checkUpdate() {
+            const lastVersion = localStorage.getItem('lohn_app_version');
+            document.getElementById('versionDisplay').innerText = APP_VERSION;
+            // erster Check für Erstinstallation, da lastVersion null
+            if (lastVersion && lastVersion !== APP_VERSION) {
+                const nachricht = CHANGELOG[APP_VERSION] || "Neue Funktionen verfügbar!";
+                showUpdateBanner(`Update ${APP_VERSION}:\n\n${nachricht}`);
+            }
+            localStorage.setItem('lohn_app_version', APP_VERSION);
+        }
+
+        function showLastChangelog() {
+            const nachricht = CHANGELOG[APP_VERSION] || "Keine Info verfügbar.";
+            showUpdateBanner(`Update ${APP_VERSION}:\n\n${nachricht}`);
+        }
+
+        function showUpdateBanner(msg) {
+            let formattedMsg = "";
+            const parts = msg.split('\n\n');
+
+            if (parts.length > 1) {
+                const title = parts[0];
+                const content = parts.slice(1).join('\n\n');
+                formattedMsg = `
+            <span class="toast-title">${title}</span>
+            <hr class="toast-divider">
+            <div style="width: 100%; text-align: center;">${content}</div>
+        `;
+            } else {
+                formattedMsg = msg;
+            }
+            showToast(formattedMsg, "OK");
+        }
+
+        async function forceUpdateApp() {
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let reg of registrations) await reg.unregister();
+            }
+            const names = await caches.keys();
+            for (let name of names) await caches.delete(name);
+            location.reload(true);
+        }
+
+        // --- 3. DEVELOPER MODUS ---
+        let isConsoleUnlocked = false;
+        //const DEV_PW = "1234"; // Master-Passwort zum Entsperren
+
+        // 1. Zugriff ohne Passwort (für Shortcut & 5x Tippen)
+        function openDevMenu() {
+            const devMenu = document.getElementById('devMenu');
+            if (devMenu) {
+                // Prüfen, ob es schon offen ist
+                if (devMenu.style.display === 'flex') {
+                    showToast("Entwickler-Modus bereits aktiv");
+                    return;
+                }
+
+                devMenu.style.display = 'flex';
+                // Konsole in den Sperrzustand versetzen
+                lockConsole();
+
+                showToast("Entwickler-Modus aktiviert");
+
+                // Auto-Fokus auf die Konsole nach dem Öffnen
+                setTimeout(() => {
+                    document.getElementById('devConsole').focus();
+                }, 300);
+            }
+        }
+
+        // 2. Klick-Zähler mit Status-Prüfung
+        function devClick() {
+            const devMenu = document.getElementById('devMenu');
+
+            // Wenn das Menü schon sichtbar ist, Zähler ignorieren
+            if (devMenu && devMenu.style.display === 'flex') {
+                showToast("Entwickler-Modus bereits aktiv");
+                devClickCount = 0;
+                return;
+            }
+
+            devClickCount++;
+            if (devClickCount >= 5) {
+                openDevMenu();
+                devClickCount = 0;
+            }
+        }
+
+        // 3. Die Konsolen-Logik
+        // Hilfsfunktion zum Erstellen eines SHA-256 Hashes
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Der gespeicherte Hash für "1234"
+        const DEV_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
+        function lockConsole() {
+            const input = document.getElementById('devConsole');
+            isConsoleUnlocked = false;
+            if (input) {
+                input.type = "password";
+                input.placeholder = "Code eingeben...";
+                input.value = "";
+                input.classList.remove('unlocked');
+            }
+            document.getElementById('consoleIcon').innerText = "🔒";
+        }
+
+        async function handleConsole(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                const val = input.value.trim();
+                const cmd = val.toLowerCase();
+
+                if (!isConsoleUnlocked) {
+                    // Logik zum Entsperren
+                    // Wir hashen die Eingabe und vergleichen sie mit dem DEV_HASH
+                    const inputHash = await sha256(val);
+
+                    if (inputHash === DEV_HASH) {
+                        isConsoleUnlocked = true;
+                        document.getElementById('consoleIcon').innerText = "🔓";
+                        input.type = "text"; // Zurück auf Text für Befehle
+                        input.placeholder = "Befehl eingeben...";
+                        input.value = "";
+                        input.classList.add('unlocked');
+                        showToast("Konsole entsperrt!");
+                    } else {
+                        showToast("Falscher Code!");
+                        input.value = "";
+                    }
+                } else {
+                    // Logik für Befehle (wenn entsperrt)
+                    executeCommand(cmd);
+                    input.value = ""; // Feld leeren nach Befehl
+                    input.focus(); // focus nach Befehl
+                }
+            }
+        }
+
+        // 4. Die Konsolen-Befehle
+        function executeCommand(cmd) {
+            switch (cmd) {
+                case 'nord':
+                    setTheme('nord');
+                    showToast("Nord Theme aktiviert ❄️");
+                    break;
+                case 'dark':
+                    setTheme('dark');
+                    break;
+                case 'light':
+                    setTheme('light');
+                    break;
+                case 'reset':
+                    localStorage.clear();
+                    location.reload();
+                    break;
+                case 'info':
+                    // Holt Version aus dem Header-Element (V1.0.6...)
+                    const versionText = document.getElementById('versionDisplay') ? document.getElementById('versionDisplay').innerText : APP_VERSION;
+                    const anzahl = savedCalculations.length;
+                    const theme = localStorage.getItem('lohn_theme_bw') || 'light';
+                    showToast(`Version: ${versionText}\nEinträge: ${anzahl}\nTheme: ${theme}`);
+                    break;
+                case 'test':
+                    // Generiert Test-Einträge im exakten App-Format
+                    const testData = [
+                        {
+                            id: Date.now(),
+                            wage: "25,00 €/Std.",
+                            rawWage: 25.0,
+                            netto: "2.850,00 €",
+                            brutto: "4.333,33 €",
+                            hours: "40 Std./Wo.",
+                            rawHours: 40,
+                            weeks: "52 Wo./Jahr",
+                            rawWeeks: 52,
+                            pinned: false
+                        },
+                        {
+                            id: Date.now() + 1,
+                            wage: "19,38 €/Std.",
+                            rawWage: 19.38,
+                            netto: "1.202,01 €",
+                            brutto: "1.574,63 €",
+                            hours: "37,5 Std./Wo.",
+                            rawHours: 37.5,
+                            weeks: "26 Wo./Jahr",
+                            rawWeeks: 26,
+                            pinned: true
+                        }
+                    ];
+                    handleImportLogic(testData); // Nutzt deine bestehende Logik (Add/Replace)
+                    break;
+                case 'logs':
+                    // Zeigt das große Changelog im Modal
+                    let logText = "";
+                    for (const [ver, info] of Object.entries(CHANGELOG)) {
+                        logText += `--- ${ver} ---\n${info}\n\n`;
+                    }
+                    document.getElementById('changelogBody').innerText = logText;
+                    document.getElementById('changelogModal').style.display = 'flex';
+                    break;
+                case 'cls':
+                    showToast("Konsole bereit.");
+                    break;
+                case 'export':
+                    if (savedCalculations.length === 0) {
+                        showToast("Keine Daten zum Exportieren vorhanden.");
+                    } else {
+                        const exportData = JSON.stringify(savedCalculations, null, 4);
+                        // Ausgabe im Modal
+                        document.getElementById('changelogBody').innerText = exportData;
+                        document.getElementById('changelogModal').style.display = 'flex';
+
+                        // In Zwischenablage kopieren (mit Fallback)
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(exportData).then(() => {
+                                showToast("JSON kopiert! 📋");
+                            });
+                        } else {
+                            showToast("JSON bereit - bitte manuell kopieren");
+                        }
+                    }
+                    break;
+                case 'import':
+                    const rawJson = prompt("JSON-Daten hier einfügen:");
+                    if (rawJson) {
+                        try {
+                            const parsed = JSON.parse(rawJson);
+                            handleImportLogic(parsed);
+                        } catch (e) {
+                            showToast("Fehler: Ungültiges JSON!");
+                        }
+                    }
+                    break;
+                case 'help':
+                    showToast("Befehle:\nhelp, info, logs, test, export, import, nord, dark, light, lock, cls");
+                    break;
+                case 'lock':
+                    lockConsole();
+                    showToast("Konsole gesperrt");
+                    break;
+                default:
+                    showToast("Unbekannter Befehl: " + cmd);
+            }
+        }
+
+        // --- 4. UI & THEME FUNKTIONEN ---
+        function setTheme(t) {
+            document.documentElement.setAttribute('data-theme', t);
+            localStorage.setItem('lohn_theme_bw', t);
+
+            // Optional: Theme-Farbe für die Browser-Leiste anpassen
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (t === 'nord') metaTheme.setAttribute('content', '#2e3440');
+            else if (t === 'dark') metaTheme.setAttribute('content', '#121212');
+            else metaTheme.setAttribute('content', '#ff8c00');
+        }
+
+        function toggleTheme() {
+            const current = localStorage.getItem('lohn_theme_bw');
+            // Wenn aktuell 'dark' oder 'nord' aktiv ist, wechsle zu 'light'
+            // Ansonsten wechsle zu 'dark'
+            if (current === 'dark' || current === 'nord') {
+                setTheme('light');
+            } else {
+                setTheme('dark');
+            }
+        }
+
+        function toggleView() {
+            const calc = document.getElementById('calculatorView');
+            const list = document.getElementById('listView');
+            const btn = document.getElementById('viewBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const pinBtn = document.getElementById('pinBtn');
+            const deselectBtn = document.getElementById('deselectBtn');
+
+            if (calc.style.display === 'none') {
+                calc.style.display = 'block';
+                list.style.display = 'none';
+                btn.innerHTML = '📊';
+                saveBtn.style.display = 'flex';
+                pinBtn.style.display = 'none';
+                deselectBtn.style.display = 'none';
+                document.getElementById('mainTitle').innerText = 'Lohnrechner';
+            } else {
+                calc.style.display = 'none';
+                list.style.display = 'block';
+                btn.innerHTML = '<span class="mirror-icon">✏️</span>';
+                saveBtn.style.display = 'none';
+                document.getElementById('mainTitle').innerText = 'Gehaltsliste';
+                renderList();
+            }
+        }
+
+        // --- 5. BERECHNUNG & SPEICHERN ---
+        function calculate() {
+            const weeks = parseFloat(document.getElementById('weeks').value) || 0;
+            const hoursPerWeek = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
+            const hourlyWage = parseFloat(document.getElementById('hourlyWage').value) || 0;
+            const monthBrutto = (weeks * hoursPerWeek * hourlyWage) / 12;
+            const kv = monthBrutto * 0.081 + (monthBrutto * 0.0085);
+            const rv = monthBrutto * 0.093;
+            const av = monthBrutto * 0.013;
+            const pv = monthBrutto * 0.023;
+            const svSumme = kv + rv + av + pv;
+            let lst = 0;
+            const jahresBrutto = monthBrutto * 12;
+            const steuerfrei = 11784;
+            if (jahresBrutto > steuerfrei) {
+                const zuVersteuerndesEinkommen = jahresBrutto - steuerfrei - (svSumme * 12 * 0.8);
+                if (zuVersteuerndesEinkommen > 0) {
+                    const y = zuVersteuerndesEinkommen / 10000;
+                    lst = (zuVersteuerndesEinkommen < 16000) ? (900 * y) : (jahresBrutto * 0.14);
+                }
+            }
+            const monatsLst = lst / 12;
+            const netto = monthBrutto - svSumme - monatsLst;
+            document.getElementById('monthlyBrutto').innerText = monthBrutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+            document.getElementById('monthlyNetto').innerText = (netto > 0 ? netto : 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+            document.getElementById('kv').innerText = kv.toFixed(2) + " €";
+            document.getElementById('rv').innerText = rv.toFixed(2) + " €";
+            document.getElementById('pv').innerText = pv.toFixed(2) + " €";
+            document.getElementById('av').innerText = av.toFixed(2) + " €";
+            document.getElementById('lst').innerText = monatsLst.toFixed(2) + " €";
+        }
+
+        function saveCalculation() {
+            const weeksVal = document.getElementById('weeks').value;
+            const hoursVal = document.getElementById('hoursPerWeek').value;
+            const wageVal = document.getElementById('hourlyWage').value;
+
+            // Umwandlung in korrekte Zahlen für die Prüfung
+            const weeks = parseFloat(weeksVal.replace(',', '.'));
+            const hours = parseFloat(hoursVal.replace(',', '.'));
+            const wage = parseFloat(wageVal.replace(',', '.'));
+
+            // Validierung: Sind es Zahlen und sind sie größer als 0?
+            if (isNaN(weeks) || isNaN(hours) || isNaN(wage) || wage <= 0 || hours <= 0) {
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                showToast("Ungültige Eingabe! Bitte Zahlen prüfen.");
+                return;
+            }
+
+            const brutto = document.getElementById('monthlyBrutto').innerText;
+            const netto = document.getElementById('monthlyNetto').innerText;
+
+            // Duplikatsprüfung
+            if (savedCalculations.some(e => e.rawWage === wage && e.rawHours === hours && e.rawWeeks === weeks)) {
+                if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+                showToast("Bereits vorhanden!");
+                return;
+            }
+
+            const entry = {
+                id: Date.now(),
+                wage: wage.toFixed(2).replace('.', ',') + " €/Std.",
+                rawWage: wage,
+                netto: netto,
+                brutto: brutto,
+                hours: hours + " Std./Wo.",
+                rawHours: hours,
+                weeks: weeks + " Wo./Jahr",
+                rawWeeks: weeks,
+                pinned: false
+            };
+
+            savedCalculations.push(entry);
+            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+
+            if (navigator.vibrate) navigator.vibrate(50);
+            showToast("Berechnung gespeichert");
+            if (document.getElementById('listView').style.display !== 'none') renderList();
+        }
+
+        // --- 6. LISTEN-VERWALTUNG & PIN ---
+        function renderList() {
+            const container = document.getElementById('savedList');
+            container.innerHTML = '';
+
+            const banner = document.createElement('div');
+            banner.id = "compareBanner";
+            banner.className = "compare-banner";
+            container.appendChild(banner);
+
+            if (savedCalculations.length === 0) {
+                container.innerHTML = '<p style="font-size:0.8em; opacity:0.6; text-align:center;">Keine Speicherungen vorhanden.</p>';
+                updateButtonVisibility(); return;
+            }
+
+            const hint = document.getElementById('listHint');
+            if (savedCalculations.length >= 2) {
+                hint.style.display = 'block';
+            } else {
+                hint.style.display = 'none';
+            }
+
+            savedCalculations.sort((a, b) => (b.pinned || false) - (a.pinned || false) || b.id - a.id);
+
+            savedCalculations.forEach(e => {
+                const isSelected = selectedIds.includes(e.id);
+                const isPinned = e.pinned || false;
+
+                const card = document.createElement('div');
+                card.className = `save-card ${isSelected ? 'selected' : ''} ${isPinned ? 'pinned' : ''}`;
+                card.tabIndex = "-1";
+
+                card.onclick = function () {
+                    toggleSelect(e.id);
+                };
+
+                card.innerHTML = `
+            <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                <span class="save-data-left">${e.wage}</span>
+                <span class="save-label-small">${e.hours} | ${e.weeks}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="text-align: right; display: flex; flex-direction: column;">
+                    <span class="save-data-right">${e.netto}</span>
+                    <span class="save-label-small">Brutto: ${e.brutto}</span>
+                </div>
+                <button class="delete-btn" tabindex="-1" onclick="event.stopPropagation(); deleteEntry(${e.id})">🗑️</button>
+            </div>`;
+                container.appendChild(card);
+            });
+            updateCompareView();
+            updateButtonVisibility();
+        }
+
+        function toggleSelect(id) {
+            // Wenn die ID schon ausgewählt ist -> abwählen
+            if (selectedIds.includes(id)) {
+                selectedIds = selectedIds.filter(sid => sid !== id);
+            } else {
+                // Wenn noch keine 2 ausgewählt sind -> hinzufügen
+                if (selectedIds.length < 2) {
+                    selectedIds.push(id);
+                } else {
+                    // Wenn schon 2 ausgewählt sind -> Fehler zeigen
+                    if (navigator.vibrate) navigator.vibrate([50, 100]);
+                    showToast("Maximal 2 Einträge für den Vergleich möglich");
+                }
+            }
+            renderList();
+        }
+
+        function updateCompareView() {
+            const banner = document.getElementById('compareBanner');
+            if (selectedIds.length !== 2) { banner.style.display = 'none'; return; }
+
+            const item1 = savedCalculations.find(e => e.id === selectedIds[0]);
+            const item2 = savedCalculations.find(e => e.id === selectedIds[1]);
+
+            const parseCurrency = (str) => parseFloat(str.replace(/[^-0-9,]/g, '').replace(',', '.')) || 0;
+
+            const diffNetto = Math.abs(parseCurrency(item1.netto) - parseCurrency(item2.netto));
+            const diffBrutto = Math.abs(parseCurrency(item1.brutto) - parseCurrency(item2.brutto));
+
+            banner.style.display = 'block';
+            banner.innerHTML = `
+        <span class="compare-title">⚖️ Vergleich Differenz</span>
+        <div class="compare-grid">
+            <div class="compare-row"><span>Brutto:</span> <strong>${diffBrutto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</strong></div>
+            <div class="compare-row"><span>Netto:</span> <strong>${diffNetto.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</strong></div>
+        </div>
+    `;
+        }
+
+        function updateButtonVisibility() {
+            const isList = document.getElementById('listView').style.display !== 'none';
+            const pinBtn = document.getElementById('pinBtn');
+            const deselectBtn = document.getElementById('deselectBtn');
+
+            if (isList) {
+                // Pin-Button: Nur wenn genau 1 Eintrag markiert ist
+                pinBtn.style.display = (selectedIds.length === 1) ? 'flex' : 'none';
+                // Deselect-Button: Wenn 2 Einträge markiert sind
+                deselectBtn.style.display = (selectedIds.length > 1) ? 'flex' : 'none';
+            } else {
+                pinBtn.style.display = 'none';
+                deselectBtn.style.display = 'none';
+            }
+        }
+
+        function pinSelected() {
+            if (selectedIds.length !== 1) return;
+
+            const idToPin = selectedIds[0];
+            let wasPinned = false;
+
+            savedCalculations = savedCalculations.map(e => {
+                if (e.id === idToPin) {
+                    // Wir prüfen den aktuellen Status VOR dem Wechseln
+                    if (!e.pinned) {
+                        wasPinned = true; // Merken, dass wir jetzt pinnen
+                    }
+                    e.pinned = !e.pinned;
+                }
+                return e;
+            });
+
+            // Nur wenn die Karte gerade erst gepinnt wurde, Markierung aufheben
+            if (wasPinned) {
+                selectedIds = [];
+            }
+
+            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+            renderList();
+        }
+
+        function deselectAll() {
+            selectedIds = [];
+            renderList();
+        }
+
+        // --- 7. IMPORT / EXPORT ---
+        function exportLohnData() {
+            // Erstellt einen Zeitstempel in der lokalen Zeitzone (ISO-Format angepasst)
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(now - offset).toISOString().slice(0, 16).replace(/[:T]/g, '-');
+
+            const blob = new Blob([JSON.stringify(savedCalculations)], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `lohnrechner_backup_${localISOTime}.json`;
+            a.click();
+
+            showToast(`${savedCalculations.length} Einträge exportiert`);
+        }
+
+        function importLohnData() {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".json";
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const imported = JSON.parse(ev.target.result);
+                        handleImportLogic(imported); // Aufruf der zentralen Logik
+                    } catch (err) { showToast("Ungültiges JSON-Format!"); }
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+
+        function handleImportLogic(imported) {
+            try {
+                if (!Array.isArray(imported)) return showToast("Ungültiges Format!");
+
+                const totalImported = imported.length;
+                const existingIds = new Set(savedCalculations.map(c => c.id));
+                const uniqueNew = imported.filter(c => !existingIds.has(c.id));
+                const skipped = totalImported - uniqueNew.length;
+
+                if (uniqueNew.length === 0 && totalImported > 0) {
+                    showToast(`Alle ${totalImported} Einträge bereits vorhanden.`);
+                    return;
+                }
+
+                showToast(
+                    `Import: ${totalImported} Einträge gefunden.\n(${skipped} bereits vorhanden)`,
+                    "Hinzufügen",
+                    () => {
+                        savedCalculations = [...savedCalculations, ...uniqueNew];
+                        localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                        renderList();
+                        showToast(`${uniqueNew.length} neu importiert, ${skipped} übersprungen`);
+                    },
+                    "Ersetzen",
+                    () => {
+                        savedCalculations = imported;
+                        localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                        renderList();
+                        showToast("Liste komplett ersetzt");
+                    }
+                );
+            } catch (err) {
+                showToast("Fehler bei der Verarbeitung!");
+            }
+        }
+
+        // --- 8. FEEDBACK & TOASTS ---
+        function showToast(message, actionText = null, actionFn = null, secondaryText = null, secondaryFn = null) {
+            const toast = document.getElementById('appToast');
+            const textSpan = document.getElementById('toastText');
+
+            // Container & Progressbar suchen/erstellen
+            let btnContainer = toast.querySelector('.toast-button-container');
+            if (!btnContainer) {
+                btnContainer = document.createElement('div');
+                btnContainer.className = 'toast-button-container';
+                toast.appendChild(btnContainer);
+            }
+            let progressBar = toast.querySelector('.toast-progress');
+            if (!progressBar) {
+                progressBar = document.createElement('div');
+                progressBar.className = 'toast-progress';
+                toast.appendChild(progressBar);
+            }
+
+            // Update-Banner Schutz (OK-Toast blockiert Info, aber nicht Löschen)
+            if (toast.classList.contains('show') && btnContainer.classList.contains('is-persistent') && !actionText && !message.includes('gelöscht')) return;
+
+            clearTimeout(toastTimeout);
+
+            // HTML oder Text setzen
+            if (message.includes('<span') || message.includes('<div')) textSpan.innerHTML = message;
+            else textSpan.innerText = message;
+
+            // Reset
+            btnContainer.innerHTML = '';
+            btnContainer.classList.remove('is-persistent');
+            progressBar.style.display = 'none';
+            progressBar.style.transition = 'none';
+            progressBar.style.transform = 'scaleX(1)';
+
+            // Buttons bauen
+            if (actionText) {
+                btnContainer.classList.add('is-persistent');
+                const b1 = document.createElement('button');
+                b1.className = 'toast-btn';
+                b1.innerText = actionText;
+                b1.onclick = (e) => { e.stopPropagation(); if (actionFn) actionFn(); toast.classList.remove('show'); };
+                btnContainer.appendChild(b1);
+
+                if (secondaryText) {
+                    const b2 = document.createElement('button');
+                    b2.className = 'toast-btn';
+                    b2.style.border = '1px solid #ff4444';
+                    b2.style.color = '#ff4444';
+                    b2.style.background = 'rgba(255, 68, 68, 0.1)';
+                    b2.innerText = secondaryText;
+                    b2.onclick = (e) => { e.stopPropagation(); if (secondaryFn) secondaryFn(); toast.classList.remove('show'); };
+                    btnContainer.appendChild(b2);
+                }
+            }
+
+            toast.classList.add('show');
+
+            // Timer Logik (Import & Update bleiben persistent)
+            const isPersistent = (actionText === "OK") || (actionText && secondaryText);
+            if (!isPersistent) {
+                const duration = actionText ? 8000 : 4000;
+                progressBar.style.display = 'block';
+                setTimeout(() => {
+                    progressBar.style.transition = `transform ${duration}ms linear`;
+                    progressBar.style.transform = 'scaleX(0)';
+                }, 10);
+                toastTimeout = setTimeout(() => toast.classList.remove('show'), duration);
+            }
+        }
+
+        function deleteEntry(id) {
+            const index = savedCalculations.findIndex(e => e.id === id);
+            if (index === -1) return;
+
+            if (navigator.vibrate) navigator.vibrate(80);
+
+            lastDeletedEntry = { data: savedCalculations[index], index: index };
+            savedCalculations.splice(index, 1);
+            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+            selectedIds = selectedIds.filter(sid => sid !== id);
+            renderList();
+            showToast("Eintrag gelöscht", "Rückgängig", undoDelete);
+        }
+
+        function undoDelete() {
+            if (!lastDeletedEntry) return;
+            savedCalculations.splice(lastDeletedEntry.index, 0, lastDeletedEntry.data);
+            localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+            lastDeletedEntry = null;
+            document.getElementById('appToast').classList.remove('show');
+            renderList();
+        }
+
+        // --- 9. EINGABEFELDER ---
+        // Verhindert Buchstaben-Eingabe (nur Zahlen, Punkt und Komma erlaubt)
+        function isNumberKey(evt) {
+            const charCode = (evt.which) ? evt.which : evt.keyCode;
+            // 44 = Komma, 46 = Punkt, 48-57 = Zahlen
+            if (charCode !== 44 && charCode !== 46 && (charCode < 48 || charCode > 57)) {
+                return false;
+            }
+            return true;
+        }
+
+        // Verhindert das Einfügen von Text via Strg+V
+        function validatePaste(evt) {
+            const pasteData = evt.clipboardData.getData('text');
+            if (/[^0-9,.]/.test(pasteData)) {
+                evt.preventDefault();
+                showToast("Nur Zahlen erlaubt!");
+            }
+        }
+
+        // Verhindert Tastennavigation per Enter oder Tab in der Listenansicht komplett
+        document.addEventListener('keydown', function (e) {
+            // Wenn wir in der Listenansicht sind
+            const isListView = document.getElementById('listView').style.display !== 'none';
+
+            if (isListView) {
+                if (e.key === 'Tab' || e.key === 'Enter') {
+                    e.preventDefault(); // Stoppt die Browser-Aktion komplett
+                    // Optional: Fokus vom aktuell aktiven Element entfernen
+                    if (document.activeElement) {
+                        document.activeElement.blur();
+                    }
+                }
+            }
+        });
+
+        // --- 10. SERVICE WORKER REGISTRIERUNG ---
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                showToast("App wurde aktualisiert. Bitte kurz neu starten.");
+            });
+        }
+
+    </script>
+</body>
+
+</html>
