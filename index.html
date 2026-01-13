@@ -807,6 +807,9 @@
         let isConsoleUnlocked = false;
         //const DEV_PW = "1234"; // Master-Passwort zum Entsperren
 
+        // Der gespeicherte Hash für "8080"
+        const DEV_HASH = "6c237681e70921603a306be9a1a5d9833fce5c1e268f52b1650970eaad0dce21";
+
         // 1. Zugriff ohne Passwort (für Shortcut & 5x Tippen)
         function openDevMenu() {
             const devMenu = document.getElementById('devMenu');
@@ -856,9 +859,6 @@
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
-
-        // Der gespeicherte Hash für "1234"
-        const DEV_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
         function lockConsole() {
             const input = document.getElementById('devConsole');
