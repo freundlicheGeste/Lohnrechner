@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lohnrechner-v1.0.8'; // Ändere die Nummer bei JEDEM Update!
+const CACHE_NAME = 'lohnrechner-v1.0.7'; // Ändere die Nummer bei JEDEM Update!
 const assets = [
   './',
   './index.html',
