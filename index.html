@@ -34,6 +34,49 @@
             --accent-color: #ffa500;
         }
 
+        /* Easter Egg: Nord Theme */
+        [data-theme="nord"] {
+            --bg-color: #2e3440;
+            --container-bg: #3b4252;
+            --text-color: #eceff4;
+            --input-border: #4c566a;
+            --result-bg: #434c5e;
+            --netto-bg: #2e3440;
+            /* Etwas dunkler für besseren Kontrast */
+            --accent-color: #88c0d0;
+            /* Frost Blue */
+            --blue-accent: #a3be8c;
+            /* NEU: Nord Aurora Green für den Netto-Wert */
+        }
+
+        /* Spezielle Anpassung für Textfarben im Nord-Theme */
+        [data-theme="nord"] .netto-value,
+        [data-theme="nord"] .res-value {
+            color: #a3be8c !important;
+            /* Aurora Green ist sehr gut lesbar */
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="nord"] .brutto-card .res-value {
+            color: #88c0d0 !important;
+            /* Frost Blue für Brutto */
+        }
+
+        [data-theme="nord"] .save-data-right {
+            color: #a3be8c !important;
+        }
+
+        [data-theme="nord"] .btn-deselect {
+            color: #bf616a !important;
+            /* Nord Red */
+            border-color: #bf616a !important;
+        }
+
+        /* Globale Deaktiverung des blauen Standardfokus-Rahmens des Browser */
+        *:focus {
+            outline: none !important;
+        }
+
         /* 2. Layout & Basis-Elemente */
         body {
             font-family: sans-serif;
@@ -251,13 +294,10 @@
             padding-left: 10px;
         }
 
-        /* Arbeitszeit-Badges */
-        .work-badge {
-            font-size: 0.7em;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-left: 5px;
+        .btn-deselect {
+            color: #ff4444 !important;
+            border-color: rgba(255, 68, 68, 0.3) !important;
+            background: rgba(255, 68, 68, 0.05) !important;
         }
 
         .list-footer {
@@ -440,6 +480,100 @@
             opacity: 0.7;
             text-align: center;
         }
+
+        /* 8. Developer Konsole */
+        /* Kompakte Buttons nur im Entwickler-Menü */
+        #devMenu .toast-btn {
+            flex: none;
+            /* Verhindert das Aufblähen */
+            width: 100%;
+            /* Nutzt die volle Breite des Containers */
+            padding: 8px;
+            /* Reduziertes Padding für weniger Höhe */
+            font-size: 1em;
+            /* Etwas kleinere Schrift als im Toast */
+            min-width: 0;
+            /* Hebt die globale min-width auf */
+            max-width: 100%;
+        }
+
+        .dev-console-wrapper {
+            position: relative;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .dev-console-input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            /* Platz links für das Icon */
+            background: var(--netto-bg);
+            border: 1px solid var(--accent-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1em;
+            box-sizing: border-box;
+        }
+
+        .console-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.8em;
+            font-style: normal !important;
+            font-family: Arial, sans-serif !important;
+            display: inline-block;
+            cursor: default;
+            user-select: none;
+        }
+
+        /* Wenn entsperrt, leuchtet die Konsole leicht */
+        .dev-console-input.unlocked {
+            border-color: #a3be8c;
+            /* Nord Grün oder einfach hellgrün */
+            box-shadow: 0 0 5px rgba(163, 190, 140, 0.5);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--container-bg);
+            color: var(--text-color);
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--accent-color);
+        }
+
+        .modal-header {
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--input-border);
+            padding-bottom: 10px;
+        }
+
+        .close-modal {
+            float: right;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
     </style>
 </head>
 
@@ -458,6 +592,10 @@
                 <button id="saveBtn" class="small-btn" onclick="saveCalculation()" title="Speichern">💾</button>
                 <button id="pinBtn" class="small-btn" style="display: none;" onclick="pinSelected()"
                     title="Pinnen">📌</button>
+                <button id="deselectBtn" class="small-btn btn-deselect" style="display: none;" onclick="deselectAll()"
+                    title="Auswahl aufheben">
+                    <span style="font-size: 1.5em; line-height: 1;">&times;</span>
+                </button>
                 <button class="small-btn" onclick="toggleView()" id="viewBtn" title="Ansicht">📊</button>
                 <button class="small-btn" onclick="toggleTheme()" title="Theme">🌓</button>
             </div>
@@ -494,7 +632,8 @@
                 <label>Stundenlohn (€):</label>
                 <input lang="en-150" type="number" id="hourlyWage" value="18.50" step="0.10"
                     onkeypress="return isNumberKey(event)" onpaste="validatePaste(event)" oninput="calculate()"
-                    onfocus="this.select()" onkeydown="if(event.key==='Enter') { this.blur(); }"
+                    onfocus="this.select()"
+                    onkeydown="if (e.key === 'Enter' || e.key === 'Tab') { event.preventDefault(); this.blur(); }"
                     onblur="this.value = parseFloat(this.value).toFixed(2)">
             </div>
 
@@ -520,9 +659,15 @@
             <div class="info-footer">
                 Basis: Steuerjahr 2026, Baden-Württemberg,<br>Gesetzlich versichert, ohne Kirchensteuer.
                 <div id="devMenu"
-                    style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 8px; flex-direction: column; gap: 10px; align-items: center;">
-                    <button onclick="showLastChangelog()" class="toast-btn">📋 Changelog</button>
-                    <button onclick="forceUpdateApp()" class="toast-btn">🔄 Reset Cache</button>
+                    style="display:none; margin-top:15px; border: 1px dashed var(--accent-color); padding: 15px; border-radius: 8px; flex-direction: column; gap: 8px; align-items: center;">
+                    <button onclick="showLastChangelog()" class="toast-btn" tabindex="-1">📋 Changelog</button>
+                    <button onclick="forceUpdateApp()" class="toast-btn" tabindex="-1">🔄 Reset Cache</button>
+
+                    <div class="dev-console-wrapper">
+                        <span id="consoleIcon" class="console-icon">🔒</span>
+                        <input type="text" id="devConsole" class="dev-console-input" placeholder="Konsole gesperrt..."
+                            tabindex="-1" onkeydown="handleConsole(event)">
+                    </div>
                 </div>
             </div>
         </div>
@@ -532,10 +677,23 @@
         <span id="toastText"></span>
     </div>
 
+    <div id="changelogModal" class="modal-overlay" onclick="this.style.display='none'">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <span class="close-modal"
+                    onclick="document.getElementById('changelogModal').style.display='none'">&times;</span>
+                📜 Komplette Versionshistorie
+            </div>
+            <div id="changelogBody" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.4;">
+            </div>
+        </div>
+    </div>
+
     <script>
         // --- 1. GLOBALE VARIABLEN & DATEN ---
-        const APP_VERSION = "v1.0.5";
+        const APP_VERSION = "v1.0.6";
         const CHANGELOG = {
+            "v1.0.6": "Fixes, DEV Konsole, Unselect Button, Listenansicht für Tastatureingaben (Tab, Enter) blockiert",
             "v1.0.5": "Neue Toast-Logik mit Undo & Progress-Bar",
             "v1.0.4": "- Inputbox lang=en, bei Lohn 2stellig nach Komma\n- Dev Klick Optimierung\n- Pin Icon für Listeneintrag entfernt",
             "v1.0.3": "Fix: Inputfelder (nur Zahlen), Pin Icon + Vergleichselement",
@@ -554,27 +712,22 @@
         window.onload = function () {
             calculate();
             checkUpdate();
-            if (localStorage.getItem('lohn_theme_bw') === 'dark') setTheme('dark');
+
+            // Bestehendes Theme laden
+            const savedTheme = localStorage.getItem('lohn_theme_bw');
+            if (savedTheme) setTheme(savedTheme);
 
             const urlParams = new URLSearchParams(window.location.search);
             const mode = urlParams.get('mode');
 
             if (mode === 'list') {
-                // Falls die App mit ?mode=list gestartet wurde, wechsle sofort zur Liste
                 toggleView();
             } else if (mode === 'dev') {
-                // PIN-Abfrage für den Dev-Modus via Shortcut
-                const pin = prompt("Bitte Entwickler-PIN eingeben:");
+                openDevMenu();
+            }
 
-                if (pin === "1234") { // Ersetze 1234 durch deine Wunsch-PIN
-                    const devMenu = document.getElementById('devMenu');
-                    if (devMenu) {
-                        devMenu.style.display = 'flex';
-                        showToast("Entwickler-Modus freigeschaltet");
-                    }
-                } else if (pin !== null) {
-                    alert("Falsche PIN!");
-                }
+            if (mode) {
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
         };
 
@@ -624,29 +777,164 @@
 
         // --- 3. DEVELOPER MODUS ---
         function devClick() {
-            var devMenu = document.getElementById('devMenu');
-
-            // Prüfen, ob der Modus bereits aktiv ist
-            if (devMenu.style.display === 'flex') {
-                showToast("Entwickler-Modus bereits aktiviert");
-                return; // Funktion hier abbrechen
-            }
-
             devClickCount++;
             if (devClickCount >= 5) {
+                openDevMenu();
+                devClickCount = 0;
+            }
+        }
+
+        let isConsoleUnlocked = false;
+        const DEV_PW = "1234"; // Master-Passwort zum Entsperren
+
+        // 1. Zugriff ohne Passwort (für Shortcut & 5x Tippen)
+        function openDevMenu() {
+            const devMenu = document.getElementById('devMenu');
+            if (devMenu) {
                 devMenu.style.display = 'flex';
                 showToast("Entwickler-Modus aktiv");
-                devClickCount = 0;
+            }
+        }
+
+        // 2. Die Konsolen-Logik
+        function handleConsole(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                const cmd = input.value.trim().toLowerCase();
+
+                if (!isConsoleUnlocked) {
+                    // Logik zum Entsperren
+                    if (cmd === DEV_PW) {
+                        isConsoleUnlocked = true;
+                        document.getElementById('consoleIcon').innerText = "🔓";
+                        input.placeholder = "Befehl eingeben...";
+                        input.value = "";
+                        input.classList.add('unlocked');
+                        showToast("Konsole entsperrt!");
+                    } else {
+                        showToast("Falscher Code!");
+                        input.value = "";
+                    }
+                } else {
+                    // Logik für Befehle (wenn entsperrt)
+                    executeCommand(cmd);
+                    input.value = ""; // Feld leeren nach Befehl
+                }
+            }
+        }
+
+        function executeCommand(cmd) {
+            switch (cmd) {
+                case 'nord':
+                    setTheme('nord');
+                    showToast("Nord Theme aktiviert ❄️");
+                    break;
+                case 'dark':
+                    setTheme('dark');
+                    break;
+                case 'light':
+                    setTheme('light');
+                    break;
+                case 'reset':
+                    localStorage.clear();
+                    location.reload();
+                    break;
+                case 'info':
+                    showToast("V" + currentVersion + " | " + savedCalculations.length + " Einträge");
+                    break;
+                case 'test':
+                    // Generiert 3 Test-Einträge
+                    const testData = [
+                        { id: Date.now(), name: "Test Junior", brutto: 3200, netto: 2150, date: new Date().toLocaleDateString() },
+                        { id: Date.now() + 1, name: "Test Senior", brutto: 5500, netto: 3420, date: new Date().toLocaleDateString() },
+                        { id: Date.now() + 2, name: "Test Chef", brutto: 8500, netto: 5100, date: new Date().toLocaleDateString(), pinned: true }
+                    ];
+                    savedCalculations.push(...testData);
+                    localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                    renderList();
+                    showToast("3 Testdatensätze erstellt 🧪");
+                    break;
+                case 'logs':
+                    // Zeigt das große Changelog
+                    const fullLogs = `
+v1.0.6: Dev-Konsole & Nord-Theme Easter Egg
+v1.0.5: Shortcut-Support & PIN-Schutz
+v1.0.4: Listenansicht & Vergleichsmodus
+v1.0.0: Initialer Release (Grundrechner)`;
+                    document.getElementById('changelogBody').innerText = fullLogs;
+                    document.getElementById('changelogModal').style.display = 'flex';
+                    break;
+                case 'cls':
+                    // Konsole optisch leeren (einfach nur ein kleiner Trick)
+                    showToast("Konsole bereit.");
+                    break;
+                case 'export':
+                    if (savedCalculations.length === 0) {
+                        showToast("Keine Daten zum Exportieren vorhanden.");
+                    } else {
+                        // Erstellt einen formatierten JSON-String
+                        const exportData = JSON.stringify(savedCalculations, null, 4);
+
+                        // Wir nutzen das vorhandene Modal für die Ausgabe
+                        document.getElementById('changelogBody').innerText = exportData;
+                        document.getElementById('changelogModal').style.display = 'flex';
+
+                        // Bonus: Direkt in die Zwischenablage kopieren
+                        navigator.clipboard.writeText(exportData).then(() => {
+                            showToast("JSON in Zwischenablage kopiert! 📋");
+                        });
+                    }
+                    break;
+                case 'import':
+                    const inputData = prompt("JSON-Daten hier einfügen:");
+                    if (inputData) {
+                        try {
+                            const parsed = JSON.parse(inputData);
+                            if (Array.isArray(parsed)) {
+                                savedCalculations = parsed;
+                                localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
+                                renderList();
+                                showToast("Import erfolgreich! ✅");
+                            }
+                        } catch (e) {
+                            showToast("Fehler: Ungültiges Format!");
+                        }
+                    }
+                    break;
+                case 'lock':
+                    // Konsole wieder sperren
+                    isConsoleUnlocked = false;
+                    document.getElementById('consoleIcon').innerText = "🔒";
+                    document.getElementById('devConsole').placeholder = "Konsole gesperrt...";
+                    document.getElementById('devConsole').classList.remove('unlocked');
+                    showToast("Konsole gesperrt");
+                    break;
+                default:
+                    showToast("Unbekannter Befehl: " + cmd);
             }
         }
 
         // --- 4. UI & THEME FUNKTIONEN ---
         function setTheme(t) {
-            localStorage.setItem('lohn_theme_bw', t);
             document.documentElement.setAttribute('data-theme', t);
+            localStorage.setItem('lohn_theme_bw', t);
+
+            // Optional: Theme-Farbe für die Browser-Leiste anpassen
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+            if (t === 'nord') metaTheme.setAttribute('content', '#2e3440');
+            else if (t === 'dark') metaTheme.setAttribute('content', '#121212');
+            else metaTheme.setAttribute('content', '#ff8c00');
         }
+
         function toggleTheme() {
-            localStorage.getItem('lohn_theme_bw') === 'dark' ? setTheme('light') : setTheme('dark');
+            const current = localStorage.getItem('lohn_theme_bw');
+            // Wenn aktuell 'dark' oder 'nord' aktiv ist, wechsle zu 'light'
+            // Ansonsten wechsle zu 'dark'
+            if (current === 'dark' || current === 'nord') {
+                setTheme('light');
+            } else {
+                setTheme('dark');
+            }
         }
 
         function toggleView() {
@@ -655,6 +943,7 @@
             const btn = document.getElementById('viewBtn');
             const saveBtn = document.getElementById('saveBtn');
             const pinBtn = document.getElementById('pinBtn');
+            const deselectBtn = document.getElementById('deselectBtn');
 
             if (calc.style.display === 'none') {
                 calc.style.display = 'block';
@@ -662,6 +951,7 @@
                 btn.innerHTML = '📊';
                 saveBtn.style.display = 'flex';
                 pinBtn.style.display = 'none';
+                deselectBtn.style.display = 'none';
                 document.getElementById('mainTitle').innerText = 'Lohnrechner';
             } else {
                 calc.style.display = 'none';
@@ -783,6 +1073,7 @@
 
                 const card = document.createElement('div');
                 card.className = `save-card ${isSelected ? 'selected' : ''} ${isPinned ? 'pinned' : ''}`;
+                card.tabIndex = "-1";
 
                 card.onclick = function () {
                     toggleSelect(e.id);
@@ -798,7 +1089,7 @@
                     <span class="save-data-right">${e.netto}</span>
                     <span class="save-label-small">Brutto: ${e.brutto}</span>
                 </div>
-                <button class="delete-btn" onclick="event.stopPropagation(); deleteEntry(${e.id})">🗑️</button>
+                <button class="delete-btn" tabindex="-1" onclick="event.stopPropagation(); deleteEntry(${e.id})">🗑️</button>
             </div>`;
                 container.appendChild(card);
             });
@@ -847,7 +1138,18 @@
 
         function updateButtonVisibility() {
             const isList = document.getElementById('listView').style.display !== 'none';
-            document.getElementById('pinBtn').style.display = (isList && selectedIds.length === 1) ? 'flex' : 'none';
+            const pinBtn = document.getElementById('pinBtn');
+            const deselectBtn = document.getElementById('deselectBtn');
+
+            if (isList) {
+                // Pin-Button: Nur wenn genau 1 Eintrag markiert ist
+                pinBtn.style.display = (selectedIds.length === 1) ? 'flex' : 'none';
+                // Deselect-Button: Wenn 2 Einträge markiert sind
+                deselectBtn.style.display = (selectedIds.length > 1) ? 'flex' : 'none';
+            } else {
+                pinBtn.style.display = 'none';
+                deselectBtn.style.display = 'none';
+            }
         }
 
         function pinSelected() {
@@ -874,6 +1176,12 @@
 
             localStorage.setItem('lohn_saved', JSON.stringify(savedCalculations));
             renderList();
+        }
+
+        function deselectAll() {
+            selectedIds = [];
+            renderList();
+            showToast("Auswahl aufgehoben");
         }
 
         // --- 7. IMPORT / EXPORT ---
@@ -1053,6 +1361,22 @@
             }
         }
 
+        // Verhindert Tastennavigation per Enter oder Tab in der Listenansicht komplett
+        document.addEventListener('keydown', function (e) {
+            // Wenn wir in der Listenansicht sind
+            const isListView = document.getElementById('listView').style.display !== 'none';
+
+            if (isListView) {
+                if (e.key === 'Tab' || e.key === 'Enter') {
+                    e.preventDefault(); // Stoppt die Browser-Aktion komplett
+                    // Optional: Fokus vom aktuell aktiven Element entfernen
+                    if (document.activeElement) {
+                        document.activeElement.blur();
+                    }
+                }
+            }
+        });
+
         // --- 10. SERVICE WORKER REGISTRIERUNG ---
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
@@ -1060,6 +1384,7 @@
                 showToast("App wurde aktualisiert. Bitte kurz neu starten.");
             });
         }
+
     </script>
 </body>
 
