@@ -22,6 +22,7 @@
             --netto-bg: #e1f5fe;
             --accent-color: #ff8c00;
             --blue-accent: #0288d1;
+            --app-max-width: 400px;
         }
 
         [data-theme="dark"] {
@@ -97,7 +98,7 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            max-width: 400px;
+            max-width: var(--app-max-width);
             width: 99%;
             box-sizing: border-box;
         }
@@ -560,7 +561,8 @@
             border-radius: 12px;
             /* FIX: Verhindert das Herausragen am Handy */
             width: 90%;
-            max-width: 450px;
+            /* Nutzt die gleiche Breite wie der Haupt-Container */
+            max-width: var(--app-max-width);
             max-height: 80vh;
             overflow-y: auto;
             border: 1px solid var(--accent-color);
@@ -710,7 +712,7 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <span class="close-modal"
-                    onclick="document.getElementById('changelogModal').style.display='none'">&times;</span>
+                    onclick="document.getElementById('changelogModal').style.display='none'; document.getElementById('devConsole').focus();">&times;</span>
                 📜 Komplette Versionshistorie
             </div>
             <div id="changelogBody" style="white-space: pre-wrap; font-size: 0.9em; line-height: 1.4;">
@@ -898,9 +900,18 @@
                     }
                 } else {
                     // Logik für Befehle (wenn entsperrt)
-                    executeCommand(cmd);
+                    // Wir speichern das Ergebnis der Funktion in einer Variable
+                    const shouldKeepFocus = executeCommand(cmd);
+
                     input.value = ""; // Feld leeren nach Befehl
-                    input.focus(); // focus nach Befehl
+
+                    // Nur wenn die Funktion 'true' zurückgibt, setzen wir den Fokus
+                    if (shouldKeepFocus) {
+                        input.focus();
+                    } else {
+                        // Optional: Fokus explizit entfernen (Tastatur am Handy einfahren)
+                        input.blur();
+                    }
                 }
             }
         }
@@ -911,16 +922,20 @@
                 case 'nord':
                     setTheme('nord');
                     showToast("Nord Theme aktiviert ❄️");
+                    return true;
                     break;
                 case 'dark':
                     setTheme('dark');
+                    return true;
                     break;
                 case 'light':
                     setTheme('light');
+                    return true;
                     break;
                 case 'reset':
                     localStorage.clear();
                     location.reload();
+                    return true;
                     break;
                 case 'info':
                     // Holt Version aus dem Header-Element (V1.0.6...)
@@ -928,6 +943,7 @@
                     const anzahl = savedCalculations.length;
                     const theme = localStorage.getItem('lohn_theme_bw') || 'light';
                     showToast(`Version: ${versionText}\nEinträge: ${anzahl}\nTheme: ${theme}`);
+                    return true;
                     break;
                 case 'test':
                     // Generiert Test-Einträge im exakten App-Format
@@ -958,6 +974,7 @@
                         }
                     ];
                     handleImportLogic(testData); // Nutzt deine bestehende Logik (Add/Replace)
+                    return false;
                     break;
                 case 'logs':
                     // Zeigt das große Changelog im Modal
@@ -967,9 +984,11 @@
                     }
                     document.getElementById('changelogBody').innerText = logText;
                     document.getElementById('changelogModal').style.display = 'flex';
+                    return false;
                     break;
                 case 'cls':
                     showToast("Konsole bereit.");
+                    return true;
                     break;
                 case 'export':
                     if (savedCalculations.length === 0) {
@@ -989,6 +1008,7 @@
                             showToast("JSON bereit - bitte manuell kopieren");
                         }
                     }
+                    return false;
                     break;
                 case 'import':
                     const rawJson = prompt("JSON-Daten hier einfügen:");
@@ -1000,16 +1020,20 @@
                             showToast("Fehler: Ungültiges JSON!");
                         }
                     }
+                    return false;
                     break;
                 case 'help':
                     showToast("Befehle:\nhelp, info, logs, test, export, import, nord, dark, light, lock, cls");
+                    return true;
                     break;
                 case 'lock':
                     lockConsole();
                     showToast("Konsole gesperrt");
+                    return true;
                     break;
                 default:
                     showToast("Unbekannter Befehl: " + cmd);
+                    return true; // Vertippt? Fokus behalten zum Korrigieren!
             }
         }
 
