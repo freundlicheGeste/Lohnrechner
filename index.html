@@ -903,14 +903,14 @@
                     // Wir speichern das Ergebnis der Funktion in einer Variable
                     const shouldKeepFocus = executeCommand(cmd);
 
-                    input.value = ""; // Feld leeren nach Befehl
-
-                    // Nur wenn die Funktion 'true' zurückgibt, setzen wir den Fokus
                     if (shouldKeepFocus) {
-                        input.focus();
+                        input.value = ""; // Feld leeren
+                        input.focus();    // Fokus behalten
                     } else {
-                        // Optional: Fokus explizit entfernen (Tastatur am Handy einfahren)
+                        // Wichtig: Erst den Fokus wegnehmen (Tastatur einfahren)
                         input.blur();
+                        // Dann das Feld leeren
+                        input.value = ""; 
                     }
                 }
             }
