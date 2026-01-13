@@ -69,8 +69,6 @@
 
         [data-theme="nord"] .btn-deselect {
             color: #bf616a !important;
-            /* Nord Red */
-            border-color: #bf616a !important;
         }
 
         /* Globale Deaktiverung des blauen Standardfokus-Rahmens des Browser */
@@ -297,8 +295,6 @@
 
         .btn-deselect {
             color: #ff4444 !important;
-            border-color: rgba(255, 68, 68, 0.3) !important;
-            background: rgba(255, 68, 68, 0.05) !important;
         }
 
         .list-footer {
@@ -623,7 +619,7 @@
                     title="Pinnen">📌</button>
                 <button id="deselectBtn" class="small-btn btn-deselect" style="display: none;" onclick="deselectAll()"
                     title="Auswahl aufheben">
-                    <span style="font-size: 1.5em; line-height: 1;">&times;</span>
+                    <span style="font-size: 1.8em; line-height: 1; margin-top: -4px;">&times;</span>
                 </button>
                 <button class="small-btn" onclick="toggleView()" id="viewBtn" title="Ansicht">📊</button>
                 <button class="small-btn" onclick="toggleTheme()" title="Theme">🌓</button>
@@ -723,7 +719,7 @@
 
     <script>
         // --- 1. GLOBALE VARIABLEN & DATEN ---
-        const APP_VERSION = "v1.0.7";
+        const APP_VERSION = "v1.0.7"; // Final v1.0 2025-01-13
         const CHANGELOG = {
             "v1.0.6": "Fixes, DEV Konsole, Unselect Button, Listenansicht für Tastatureingaben (Tab, Enter) blockiert",
             "v1.0.5": "Neue Toast-Logik mit Undo & Progress-Bar",
